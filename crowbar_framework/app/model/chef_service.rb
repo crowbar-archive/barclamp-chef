@@ -19,7 +19,7 @@
 # the different CMDB (e.g. chef, puppet)
 
 
-class CmdbService < ServiceObject
+class ChefService < ServiceObject
 
 
 end
