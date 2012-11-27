@@ -23,12 +23,12 @@ barclamp:
   version: 0
   proposal_schema_version: 1
   member:
-    - chef
+    - crowbar
 
 crowbar:
   layout: 2
-  order: 0
-  run_order: 0
-  chef_order: 0
+  order: 1
+  run_order: 1
+  chef_order: 1
   proposal_schema_version: 2
 
