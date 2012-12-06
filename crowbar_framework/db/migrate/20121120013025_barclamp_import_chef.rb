@@ -15,10 +15,12 @@
 class BarclampImportChef < ActiveRecord::Migration
   def up
     Barclamp.import_1x 'chef'
+    Cmdb.find_or_create_by_name :name =>'admin-chef', :type => 'chef'
   end
 
   def down
     Barclamp.delete(Barclamp.find_by_name 'chef')
+    Cmdb.delete_by_name 'admin-chef'
   end
   
 end
