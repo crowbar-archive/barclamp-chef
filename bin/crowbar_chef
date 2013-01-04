@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+# Copyright 2011, Dell
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+
+require File.join(File.expand_path(File.dirname(__FILE__)), "barclamp_lib")
+@barclamp = "chef"
+
+
+alias orig_proposal_edit proposal_edit
+
+#####
+# override the default edit proposal. The new behavior treats  the 
+# client_key parameter as a name of a file, and replaces the value
+# of the paramter with that content, for each defined server.
+def proposal_edit(name)
+  usage -1 if name.nil? or name == "" or @data==""
+  prop = JSON.parse(@data)
+  prop["attributes"]["chef"]["servers"].each { |s,v| 
+    fname = v["client_key"]
+    v["client_key"] = IO.read(fname)
+  }
+  @data = prop.to_json
+  orig_proposal_edit(name)
+end
+
+
+main
