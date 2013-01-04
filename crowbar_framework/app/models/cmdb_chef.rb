@@ -13,8 +13,9 @@
 # limitations under the License.
 #
 #
-# TODO - this belongs in it's own barclamp!!!
 class CmdbChef < Cmdb
+
+  has_one :cmdb_chef_conn_info, :dependent => :destroy
 
   def init
     Chef::Config.node_name CHEF_NODE_NAME
@@ -29,33 +30,41 @@ class CmdbChef < Cmdb
     super.apply_proposal(new_config)
   end
 
-  def create_event(config)
-    evt = CmdbEvent.create(:proposal_confing =>config, :cmdb => self, 
-      :status => CmdbEvent::EVT_PENDING)
-    evt
-  end
-
-  def create_run_for(evt, nr,order)
-    run = CmdbRunChef.create(:cmdb_event => evt, :node_role => nr, 
-      :order=>order, :status => CmdbRun::RUN_PENDING)
-    run
-  end
-
-
   #### 
   # create the relevant structures in Chef that are needed before any run can be executed  
   def prepare_for_execution(event, config) 
 
-    # find dependent proposal
+    # find dependent proposals
     # for every proposal, ensure there's a config-role for the proposal
 
     # for every node config, ensure there's a node-role, that merges the config 
     # from all applicable configurations. The run list will be computed as 
     # runs are executed.
 
-
   end
 
+
+  def create_event(config)
+    evt = CmdbEvent.create(:type=>"CmdbEvent", :proposal_confing =>config, 
+      :cmdb => self, :status => CmdbEvent::EVT_PENDING, :name=>"apply_#{config.id}")
+    evt
+  end
+
+  def create_run_for(evt, nr,order)
+    run = CmdbRunChef.create(:type=> "CmdbRunChef", :cmdb_event => evt, 
+      :node_role => nr, :order=>order, :status => CmdbRun::RUN_PENDING, 
+      :name=>"run_#{evt.id}_#{nr.id}_#{order}")
+    run
+  end
+
+  def delete_node(node)
+    name = node.name
+    Rails.logger.info("Chef CMDB #{self.name} is removing the node #{name} from the system")
+    system("knife node delete -y #{name} -u chef-webui -k /etc/chef/webui.pem")
+    system("knife client delete -y #{name} -u chef-webui -k /etc/chef/webui.pem")
+    # TODO this may not be needed in the new Crowbar 2 design
+    system("knife role delete -y crowbar-#{name.gsub(".","_")} -u chef-webui -k /etc/chef/webui.pem")
+  end
 
   def node(name)
     begin 

@@ -3,8 +3,14 @@
   "description": "Provide services to Crowbar to allow deployment with Chef cookbooks",
   "attributes": {
     "chef": {
-        "admin_ip_eval": "node.address.addr"
-    }
+        "servers": {
+          "admin_chef": {
+             "server_url": "https://192.168.124.10:4000/",
+             "client_name": "crowbar",
+             "client_key": "/home/aabes/chef.pem"
+            }
+         }
+      }
   },
   "deployment": {
     "chef": {
