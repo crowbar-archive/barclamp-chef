@@ -8,7 +8,9 @@
                  = : { "type": "map", "required": true, "mapping": {
                     "server_url" : { "type": "str" },
                     "client_name" : { "type": "str" },
-                    "client_key" : { "type": "str" }
+                    "client_key" : { "type": "str" },
+                    "description" : { "type": "str" },
+                    "order" : { "type": int }
                  }}
               }}
           }}
