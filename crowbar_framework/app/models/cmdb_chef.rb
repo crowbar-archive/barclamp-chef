@@ -25,6 +25,21 @@ class CmdbChef < Cmdb
   end
 
 
+  def prepare_chef_api(type)
+    conn_info = self.cmdb_chef_conn_info
+    Chef::Config.node_name = conn_info.client_name
+    Chef::Config.chef_server_url = conn_info.url
+    Chef::Config.client_key = nil
+    case type
+      when :query
+        ret = Chef::Search::Query.new
+    end
+
+    ret.replace_authenticator(ReplacementAuth.new(conn_info.client_name, conn_info.key))
+  end
+
+
+
   def apply_proposal(new_config)    
     ## for now, just call super
     super.apply_proposal(new_config)
