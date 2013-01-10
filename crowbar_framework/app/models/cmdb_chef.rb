@@ -13,6 +13,7 @@
 # limitations under the License.
 #
 #
+require 'monkeypatch/rest'
 class CmdbChef < Cmdb
 
   has_one :cmdb_chef_conn_info, :dependent => :destroy
@@ -23,6 +24,16 @@ class CmdbChef < Cmdb
     Chef::Config.chef_server_url CHEF_SERVER_URL
     super.init  
   end
+
+
+  def prepare_chef_api(type)
+    conn_info = self.cmdb_chef_conn_info
+    Chef::Config.node_name = conn_info.client_name
+    Chef::Config.chef_server_url = conn_info.url
+
+    Chef::REST.replace_authenticator(ReplacementAuth.new(conn_info.client_name, conn_info.key))
+  end
+
 
 
   def apply_proposal(new_config)    

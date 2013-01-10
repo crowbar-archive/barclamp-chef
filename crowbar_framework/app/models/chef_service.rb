@@ -21,5 +21,30 @@
 
 class ChefService < ServiceObject
 
+  def commit_proposal(proposal)
+    config = proposal.current_config.config_hash["chef"]
+    @logger.info "config is: #{config.inspect}"
+    CmdbChef.transaction {      
+      config["servers"].each { | srv_name, srv |  
+        c = CmdbChef.find_by_name(srv_name)
+        if c.nil? 
+          CmdbChef.create( :name=>srv_name, :type=>CmdbChef.name,
+            :description => srv["description"], :order => srv["order"])        
+        end
+        cc = c.cmdb_chef_conn_info 
+        if cc.nil?
+          cc = CmdbChefConnInfo.create
+          cc.cmdb = c
+        end
 
+        #set or update connection info
+        cc.url = srv["url"]
+        cc.client_name=srv["client_name"]
+        cc.key = srv["client_key"]
+        @logger.info "saving #{c.inspect}"
+        cc.save!
+        c.save!
+      }    
+    }
+  end
 end
