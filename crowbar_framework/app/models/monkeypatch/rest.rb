@@ -23,7 +23,7 @@ class Chef::REST
   end
 
   alias :orig_initialize :initialize
-  def initialize(url, client_name=Chef::Config[:node_name], signing_key_filename=ni, options={},raw_key = nil)
+  def initialize(url, client_name=Chef::Config[:node_name], signing_key_filename=nil, options={},raw_key = nil)
     orig_initialize
     replace_authenticator(ReplacementAuth.new(client_name,raw_key))
   end
