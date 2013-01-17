@@ -14,9 +14,9 @@
 # 
 #
 
-# Cmdb_service is a service facade that provides the API to the CMDB layer. It serves as 
+# Jig_service is a service facade that provides the API to the Jig layer. It serves as 
 # a template class, which delegates appropriate operations to specialized subclasses for 
-# the different CMDB (e.g. chef, puppet)
+# the different Jig (e.g. chef, puppet)
 
 
 class ChefService < ServiceObject
@@ -24,16 +24,16 @@ class ChefService < ServiceObject
   def commit_proposal(proposal)
     config = proposal.current_config.config_hash["chef"]
     @logger.info "config is: #{config.inspect}"
-    CmdbChef.transaction {      
+    JigChef.transaction {      
       config["servers"].each { | srv_name, srv |  
-        c = CmdbChef.find_by_name(srv_name)
+        c = JigChef.find_by_name(srv_name)
         if c.nil? 
-          CmdbChef.create( :name=>srv_name, :type=>CmdbChef.name,
+          JigChef.create( :name=>srv_name, :type=>JigChef.name,
             :description => srv["description"], :order => srv["order"])        
         end
         cc = c.cmdb_chef_conn_info 
         if cc.nil?
-          cc = CmdbChefConnInfo.create
+          cc = JigChefConnInfo.create
           cc.cmdb = c
         end
 
