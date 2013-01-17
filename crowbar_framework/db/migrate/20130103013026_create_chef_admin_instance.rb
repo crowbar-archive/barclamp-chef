@@ -14,11 +14,11 @@
 class CreateChefAdminInstance < ActiveRecord::Migration
   def up
     ### this will soon  move to be created as part of applying the chef proposal...
-    Cmdb.find_or_create_by_name :name =>'admin_chef', :type => 'CmdbChef'
+    Jig.find_or_create_by_name :name =>'admin_chef', :type => 'JigChef'
   end
 
   def down
-    Cmdb.delete(Cmdb.find_by_name 'admin_chef')
+    Jig.delete(Jig.find_by_name 'admin_chef')
   end
 end
 

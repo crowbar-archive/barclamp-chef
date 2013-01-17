@@ -13,12 +13,12 @@
 #
 class CreateChefConnInfo < ActiveRecord::Migration
   def change
-    create_table :cmdb_chef_conn_infos do |t|
+    create_table :jig_chef_conn_infos do |t|
       t.string :url
       t.string :client_name
       t.string :key
       t.string :key_file_name
-      t.references :cmdb
+      t.references :jig
     end
   end
 end
