@@ -13,9 +13,9 @@
 # limitations under the License.
 #
 #
-class CmdbChef < Cmdb
+class JigChef < Jig
 
-  has_one :cmdb_chef_conn_info, :dependent => :destroy
+  has_one :jig_chef_conn_info, :dependent => :destroy
 
   def init
     Chef::Config.node_name CHEF_NODE_NAME
@@ -45,21 +45,21 @@ class CmdbChef < Cmdb
 
 
   def create_event(config)
-    evt = CmdbEvent.create(:type=>"CmdbEvent", :proposal_confing =>config, 
-      :cmdb => self, :status => CmdbEvent::EVT_PENDING, :name=>"apply_#{config.id}")
+    evt = JigEvent.create(:type=>"JigEvent", :proposal_confing =>config, 
+      :jig => self, :status => JigEvent::EVT_PENDING, :name=>"apply_#{config.id}")
     evt
   end
 
   def create_run_for(evt, nr,order)
-    run = CmdbRunChef.create(:type=> "CmdbRunChef", :cmdb_event => evt, 
-      :node_role => nr, :order=>order, :status => CmdbRun::RUN_PENDING, 
+    run = JigRunChef.create(:type=> "JigRunChef", :jig_event => evt, 
+      :node_role => nr, :order=>order, :status => JigRun::RUN_PENDING, 
       :name=>"run_#{evt.id}_#{nr.id}_#{order}")
     run
   end
 
   def delete_node(node)
     name = node.name
-    Rails.logger.info("Chef CMDB #{self.name} is removing the node #{name} from the system")
+    Rails.logger.info("Chef Jig #{self.name} is removing the node #{name} from the system")
     system("knife node delete -y #{name} -u chef-webui -k /etc/chef/webui.pem")
     system("knife client delete -y #{name} -u chef-webui -k /etc/chef/webui.pem")
     # TODO this may not be needed in the new Crowbar 2 design
