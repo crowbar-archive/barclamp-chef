@@ -15,7 +15,7 @@
 #
 
 # hold information required to connect to an existing chef-server
-class CmdbChefConnInfo < ActiveRecord::Base
+class JigChefConnInfo < ActiveRecord::Base
   attr_accessible :url, :client_name, :key, :key_file_name
-  belongs_to :cmdb
+  belongs_to :jig
 end

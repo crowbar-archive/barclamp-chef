@@ -14,9 +14,9 @@
 # 
 #
 
-# Cmdb_service is a service facade that provides the API to the CMDB layer. It serves as 
+# Jig_service is a service facade that provides the API to the Jig layer. It serves as 
 # a template class, which delegates appropriate operations to specialized subclasses for 
-# the different CMDB (e.g. chef, puppet)
+# the different Jig (e.g. chef, puppet)
 
 
 class ChefService < ServiceObject
