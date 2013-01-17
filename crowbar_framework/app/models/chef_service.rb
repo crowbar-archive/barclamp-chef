@@ -31,10 +31,10 @@ class ChefService < ServiceObject
           JigChef.create( :name=>srv_name, :type=>JigChef.name,
             :description => srv["description"], :order => srv["order"])        
         end
-        cc = c.cmdb_chef_conn_info 
+        cc = c.jig_chef_conn_info 
         if cc.nil?
           cc = JigChefConnInfo.create
-          cc.cmdb = c
+          cc.jig = c
         end
 
         #set or update connection info
