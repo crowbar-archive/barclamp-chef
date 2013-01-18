@@ -29,7 +29,7 @@ def proposal_edit(name)
   usage -1 if name.nil? or name == "" or @data==""
   prop = JSON.parse(@data)
   prop["attributes"]["chef"]["servers"].each { |s,v| 
-    fname = v["client_key"]
+    fname = File.expand_path(v["client_key"])
     v["client_key"] = IO.read(fname)
   }
   @data = prop.to_json
