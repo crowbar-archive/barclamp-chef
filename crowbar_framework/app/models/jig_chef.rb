@@ -30,9 +30,10 @@ class JigChef < Jig
 
   def prepare_chef_api
     conn_info = self.jig_chef_conn_info
+    logger.info("No Chef connection info") and return unless conn_info
     Chef::Config.node_name = conn_info.client_name
     Chef::Config.chef_server_url = conn_info.url
-    Chef::REST.replace_authenticator(conn_info.client_name, conn_info.key)
+    ReplacementAuthMod.replace_authenticator(conn_info.client_name, conn_info.key)
   end
 
 
