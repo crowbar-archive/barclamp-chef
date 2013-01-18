@@ -25,7 +25,7 @@ class Chef::REST
 
   @@replacement_auth_credentials = nil
 
-  alias :orig_initialize :initialize
+  alias_method :orig_initialize, :initialize
   def initialize(url, client_name=Chef::Config[:node_name], signing_key_filename=nil, options={})
     # ignore signning key    
     unless  @@replacement_auth_credentials.nil?

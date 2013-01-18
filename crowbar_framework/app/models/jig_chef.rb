@@ -28,12 +28,11 @@ class JigChef < Jig
   end
 
 
-  def prepare_chef_api(type)
+  def prepare_chef_api
     conn_info = self.jig_chef_conn_info
     Chef::Config.node_name = conn_info.client_name
     Chef::Config.chef_server_url = conn_info.url
-
-    Chef::REST.replace_authenticator(ReplacementAuth.new(conn_info.client_name, conn_info.key))
+    Chef::REST.replace_authenticator(conn_info.client_name, conn_info.key)
   end
 
 

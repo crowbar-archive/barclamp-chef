@@ -34,11 +34,11 @@ class ChefService < ServiceObject
         cc = c.jig_chef_conn_info 
         if cc.nil?
           cc = JigChefConnInfo.create
-          cc.jig = c
+          cc.jig_chef = c
         end
 
         #set or update connection info
-        cc.url = srv["url"]
+        cc.url = srv["server_url"]
         cc.client_name=srv["client_name"]
         cc.key = srv["client_key"]
         @logger.info "saving #{c.inspect}"
