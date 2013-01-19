@@ -7,7 +7,9 @@
           "admin_chef": {
              "server_url": "https://192.168.124.10:4000/",
              "client_name": "crowbar",
-             "client_key": "/home/aabes/chef.pem"
+             "client_key": "~/crowbar/barclamps/chef/crowbar_framework/test/fixtures/chef.pem",
+             "description": "default chef server on the admin",
+             "order" : 10
             }
          }
       }

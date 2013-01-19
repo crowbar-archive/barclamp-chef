@@ -18,7 +18,7 @@ class CreateChefConnInfo < ActiveRecord::Migration
       t.string :client_name
       t.string :key
       t.string :key_file_name
-      t.references :jig
+      t.references :jig_chef
     end
   end
 end

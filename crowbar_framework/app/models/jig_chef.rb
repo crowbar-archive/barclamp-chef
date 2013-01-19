@@ -13,6 +13,9 @@
 # limitations under the License.
 #
 #
+
+require 'monkeypatch/rest'
+
 class JigChef < Jig
 
   has_one :jig_chef_conn_info, :dependent => :destroy
@@ -23,6 +26,16 @@ class JigChef < Jig
     Chef::Config.chef_server_url CHEF_SERVER_URL
     super.init  
   end
+
+
+  def prepare_chef_api
+    conn_info = self.jig_chef_conn_info
+    logger.info("No Chef connection info") and return unless conn_info
+    Chef::Config.node_name = conn_info.client_name
+    Chef::Config.chef_server_url = conn_info.url
+    ReplacementAuthMod.replace_authenticator(conn_info.client_name, conn_info.key)
+  end
+
 
 
   def apply_proposal(new_config)    
