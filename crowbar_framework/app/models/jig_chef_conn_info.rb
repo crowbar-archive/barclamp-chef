@@ -17,5 +17,5 @@
 # hold information required to connect to an existing chef-server
 class JigChefConnInfo < ActiveRecord::Base
   attr_accessible :url, :client_name, :key, :key_file_name
-  belongs_to :jig
+  belongs_to :jig_chef
 end
