@@ -24,7 +24,6 @@ barclamp:
   proposal_schema_version: 1
   member:
     - crowbar
-  barclamp_install_action: bin/make_crowbar_user.sh
 
 crowbar:
   layout: 1.9
