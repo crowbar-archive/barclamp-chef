@@ -1,0 +1,93 @@
+#!/bin/bash
+
+ensure_service_running () {
+    service="$1"
+    regexp="${2:-running}"
+    if service $service status | egrep -q "$regexp"; then
+        echo "$service is already running - no need to start."
+    else
+        service $service start
+    fi
+}
+
+# Run a command and log its output.
+log_to() {
+    # $1 = install log to log to
+    # $@ = rest of args
+    local __logname="$1" _ret=0
+    local __log="/var/log/install-$1"
+    local __timestamp="$(date '+%F %T %z')"
+    local log_skip_re='^gem|knife$'
+    shift
+    [[ -e $__log.log ]] || echo "Install run done for version: $VERSION" >> $__log.log
+    [[ -e $__log.err ]] || echo "Install run done for version: $VERSION" >> $__log.err
+    printf "\n%s\n" "$__timestamp: Running $*" | \
+        tee -a "$__log.err" >> "$__log.log"
+    "$@" 2>> "$__log.err" >>"$__log.log" || {
+        _ret=$?
+        if ! [[ $__logname =~ $log_skip_re ]]; then
+            echo "$__timestamp: $* failed."
+            echo "See $__log.log and $__log.err for more information."
+        fi
+    }
+    printf "\n$s\n--------\n"  "$(date '+%F %T %z'): Done $*" | \
+        tee -a "$__log.err" >> "$__log.log"
+    return $_ret
+}
+
+service chef-client stop
+
+# Default password in chef webui to password
+sed -i 's/web_ui_admin_default_password ".*"/web_ui_admin_default_password "password"/' /etc/chef/webui.rb
+
+chkconfig rabbitmq-server on
+ensure_service_running rabbitmq-server '^Node .+ with Pid [0-9]+: running'
+
+if rabbitmqctl list_vhosts | grep -q '^/chef$'; then
+    : /chef vhost already added
+else
+    rabbitmqctl add_vhost /chef
+fi
+
+if rabbitmqctl list_users 2>&1 | grep -q '^chef	'; then
+    : chef user already added
+else
+    rabbit_chef_password=$( dd if=/dev/urandom count=1 bs=16 2>/dev/null | base64 | tr -d / )
+    rabbitmqctl add_user chef "$rabbit_chef_password"
+    # Update "amqp_pass" in  /etc/chef/server.rb and solr.rb
+    sed -i 's/amqp_pass ".*"/amqp_pass "'"$rabbit_chef_password"'"/' /etc/chef/{server,solr}.rb
+fi
+
+rabbitmqctl set_permissions -p /chef chef ".*" ".*" ".*"
+
+chkconfig couchdb on
+ensure_service_running couchdb
+
+# increase chef-solr index field size
+perl -i -pe 's{<maxFieldLength>.*</maxFieldLength>}{<maxFieldLength>200000</maxFieldLength>}' /var/lib/chef/solr/conf/solrconfig.xml
+
+services='solr expander server server-webui'
+for service in $services; do
+    chkconfig chef-${service} on
+done
+
+for service in $services; do
+    ensure_service_running chef-${service}
+done
+
+# chef-server-webui won't start if /etc/chef/webui.pem doesn't exist, which
+# may be the case (chef-server generates it if not present, and if the webui
+# starts too soon, it won't be there yet).
+for ((x=1; x<6; x++)); do
+    sleep 10
+    service chef-server-webui status >/dev/null && { chef_webui_running=true; break; }
+    service chef-server-webui start
+done
+if [[ ! $chef_webui_running ]]; then
+    echo "WARNING: unable to start chef-server-webui"
+fi
+if ! [ -e ~/.chef/knife.rb ]; then
+    yes '' | knife configure -i
+fi
+
+chef-client
