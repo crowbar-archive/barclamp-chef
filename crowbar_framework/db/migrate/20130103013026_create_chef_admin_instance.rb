@@ -14,11 +14,12 @@
 class CreateChefAdminInstance < ActiveRecord::Migration
   def up
     ### this will soon  move to be created as part of applying the chef proposal...
-    Jig.find_or_create_by_name :name =>'admin_chef', :type => 'JigChef'
+    BarclampChef::Jig.find_or_create_by_name :name =>'admin_chef', :order => 100
+    BarclampChef::Jig.find_or_create_by_name :name =>'chef', :order => 200
   end
 
   def down
-    Jig.delete(Jig.find_by_name 'admin_chef')
+    Jig.delete(BarclampChef::Jig.delete_all)
   end
 end
 
