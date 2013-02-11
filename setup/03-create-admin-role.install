@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Re-run barclamp install for crowbar to upload cookbooks and stuff to the now
+# running chef server
+/opt/dell/bin/barclamp_install.rb --debug --no-framework-install --no-install-actions crowbar
+
+# Create Crowbar node role
+FQDN=`hostname -f`
+echo "$(date '+%F %T %z'): Create Admin node role"
+NODE_ROLE="crowbar-${FQDN//./_}" 
+cat > /tmp/role.rb <<EOF
+name "$NODE_ROLE"
+description "Role for $FQDN"
+run_list()
+default_attributes( "crowbar" => { "network" => {} } )
+override_attributes()
+EOF
+knife role from file /tmp/role.rb
+rm -rf /tmp/role.rb
+
