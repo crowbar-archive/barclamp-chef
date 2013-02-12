@@ -1,5 +1,12 @@
 #!/bin/bash
 
+## only do this on real installs.
+[[  -d /tftpboot/ubuntu_dvd/dell/Version || \
+    -d /tftpboot/redhat_dvd/dell/Version || \
+    -d /opt/dell/barclamps/crowbar ]] || \
+    { echo "Not an admin node, not installing Chef"; exit 0; }
+
+
 ensure_service_running () {
     service="$1"
     regexp="${2:-running}"
@@ -20,7 +27,7 @@ service chef-client stop
 
 if [[ -f /etc/redhat-release || -f /etc/centos-release ]]; then
     OS=redhat
-elif [[ -d /etc/apt]]; then
+elif [[ -d /etc/apt ]]; then
     OS=ubuntu
 elif [[ -f /etc/SuSE-release ]]; then
     OS=suse
@@ -80,7 +87,7 @@ perl -i -pe 's{<maxFieldLength>.*</maxFieldLength>}{<maxFieldLength>200000</maxF
 
 service chef-solr restart
 
-if [[ !-e ~/.chef/knife.rb ]]; then
+if [[ ! -e ~/.chef/knife.rb ]]; then
     yes '' | knife configure -i
 fi
 
