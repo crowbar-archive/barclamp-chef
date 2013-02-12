@@ -38,7 +38,7 @@ if ! knife role list |grep -qF "$NODE_ROLE"; then
 name "$NODE_ROLE"
 description "Role for $FQDN"
 run_list()
-default_attributes( "crowbar" => { "network" => {} } )
+default_attributes( "crowbar" => { "network" => {}, "realm" => "Crowbar" } )
 override_attributes()
 EOF
     knife role from file /tmp/role.rb
