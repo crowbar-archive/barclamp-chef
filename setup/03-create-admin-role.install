@@ -1,20 +1,46 @@
 #!/bin/bash
 
+## only do this on real installs.
+[[  -d /tftpboot/ubuntu_dvd/dell/Version || \
+    -d /tftpboot/redhat_dvd/dell/Version || \
+    -d /opt/dell/barclamps/crowbar ]] || \
+    { echo "Not an admin node, not creating client"; exit 0; }
+
 # Re-run barclamp install for crowbar to upload cookbooks and stuff to the now
 # running chef server
-/opt/dell/bin/barclamp_install.rb --debug --no-framework-install --no-install-actions crowbar
 
-# Create Crowbar node role
-FQDN=`hostname -f`
+if [[ -d /opt/dell/barclamps/crowbar/chef/cookbooks ]]; then
+    /opt/dell/bin/barclamp_install.rb --debug --no-framework-install --no-install-actions crowbar
+elif [[ -d /opt/dell/chef/cookbooks ]]; then
+    # OK, now load all the cookbooks, data bags, and roles
+    (   cd /opt/dell/chef
+        knife cookbook upload -o cookbooks --all
+        knife role from file roles/*.rb
+        for d in data_bags/*; do
+            [[ -d $d ]] || continue
+            knife data bag create "${d##*/}"
+            for bag in "$d/"*.json; do
+                knife data bag from file "${d##*/}" "$bag"
+            done
+        done
+    )
+else
+    # o noes, panic
+    echo "Cannot find cookbook information to upload!"
+    exit 1
+fi
+
+FQDN=$(hostname -f)
+NODE_ROLE="crowbar-${FQDN//./_}"
 echo "$(date '+%F %T %z'): Create Admin node role"
-NODE_ROLE="crowbar-${FQDN//./_}" 
-cat > /tmp/role.rb <<EOF
+if ! knife role list |grep -qF "$NODE_ROLE"; then
+    cat > /tmp/role.rb <<EOF
 name "$NODE_ROLE"
 description "Role for $FQDN"
 run_list()
 default_attributes( "crowbar" => { "network" => {} } )
 override_attributes()
 EOF
-knife role from file /tmp/role.rb
-rm -rf /tmp/role.rb
-
+    knife role from file /tmp/role.rb
+    rm -rf /tmp/role.rb
+fi
