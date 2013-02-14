@@ -60,6 +60,7 @@ if [[ $OS = redhat || $OS = suse ]]; then
         die "Could not set proper rabbitmq Chef permissions."
     echo "Starting CouchDB..."
     chkconfig couchdb on
+    ensure_service_running couchdb
 
     services='solr expander server server-webui'
     for service in $services; do
