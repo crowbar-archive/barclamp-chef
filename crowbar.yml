@@ -36,3 +36,38 @@ crowbar:
   chef_order: 1
   proposal_schema_version: 2
 
+debs:
+  ubuntu-12.04:
+    repos:
+      - deb http://apt.opscode.com/ precise-0.10 main
+  required_pkgs:
+    - rabbitmq-server
+    - chef
+    - chef-server
+    - chef-server-webui
+    - nginx
+  pkgs:
+    - rabbitmq-server
+    - chef
+    - chef-server
+    - chef-server-webui
+    - nginx
+rpms:
+  redhat-6.2:
+    repos:
+      - rpm http://rbel.frameos.org/rbel6
+  centos-6.2:
+    repos:
+      - rpm http://rbel.frameos.org/rbel6
+  required_pkgs:
+    - rabbitmq-server
+    - rubygem-chef
+    - rubygem-chef-server
+    - rubygem-ohai
+    - nginx
+  pkgs:
+    - rabbitmq-server
+    - rubygem-chef
+    - rubygem-chef-server
+    - rubygem-ohai
+    - nginx
