@@ -119,7 +119,7 @@ if [[ ! -e ~/.chef/knife.rb ]]; then
 fi
 
 if [[ ! -e /home/crowbar/.chef/knife.rb ]]; then
-    yes '' |sudo -u crowbar -i --knife configure -i
+    yes '' |sudo -u crowbar -H -i -- knife configure -i
 fi
 
 chef-client
