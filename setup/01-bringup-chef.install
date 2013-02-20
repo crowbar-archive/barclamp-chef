@@ -53,11 +53,11 @@ chef_server_webui['listen']="0.0.0.0:4040"
 EOF
         # Reconfigure chef-server to match what we expect.
         chef-server-ctl reconfigure
+        chef-server-ctl test || {
+            echo "Could not bring up valid chef server!"
+            exit 1
+        }
     fi
-    chef-server-ctl test || {
-        echo "Could not bring up valid chef server!"
-        exit 1
-    }
     mkdir -p /etc/chef
     ln -s /etc/chef-server/chef-webui.pem /etc/chef/webui.pem
     ln -s /etc/chef-server/chef-validator.pem /etc/chef/validation.pem
@@ -115,6 +115,11 @@ fi
 
 if [[ ! -e ~/.chef/knife.rb ]]; then
     yes '' | knife configure -i
+    knife configure client ~/.chef
+fi
+
+if [[ ! -e /home/crowbar/.chef/knife.rb ]]; then
+    yes '' |sudo -u crowbar -i --knife configure -i
 fi
 
 chef-client
