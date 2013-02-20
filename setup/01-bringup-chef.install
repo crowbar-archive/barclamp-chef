@@ -35,7 +35,33 @@ else
     die "Staged on to unknown OS media!"
 fi
 
-if [[ $OS = redhat || $OS = suse ]]; then
+if [[ $OS = ubuntu || $OS = redhat ]]; then
+    # Set up initial config
+    chef-server-ctl reconfigure
+    mkdir -p /etc/chef-server
+    # Customize to match what the rest of Crowbar expects.
+    if [[ ! -f /etc/chef-server/chef-server.rb ]]; then
+        cat >/etc/chef-server/chef-server.rb <<EOF
+# chef-server settings.
+erchef["listen"]="0.0.0.0"
+erchef["port"]=4000
+erchef["url"]="http://0.0.0.0:4000"
+erchef["web_ui_client_name"]="chef-webui"
+chef_server_webui['port']=4040
+chef_server_webui['url']="http://0.0.0.0:4040"
+chef_server_webui['listen']="0.0.0.0:4040"
+EOF
+        # Reconfigure chef-server to match what we expect.
+        chef-server-ctl reconfigure
+        chef-server-ctl test || {
+            echo "Could not bring up valid chef server!"
+            exit 1
+        }
+    fi
+    mkdir -p /etc/chef
+    ln -s /etc/chef-server/chef-webui.pem /etc/chef/webui.pem
+    ln -s /etc/chef-server/chef-validator.pem /etc/chef/validation.pem
+elif [[ $OS = suse ]]; then
     # Default password in chef webui to password
     sed -i 's/web_ui_admin_default_password ".*"/web_ui_admin_default_password "password"/' \
         /etc/chef/webui.rb
@@ -82,14 +108,18 @@ if [[ $OS = redhat || $OS = suse ]]; then
     if [[ ! $chef_webui_running ]]; then
         echo "WARNING: unable to start chef-server-webui"
     fi
+    perl -i -pe 's{<maxFieldLength>.*</maxFieldLength>}{<maxFieldLength>200000</maxFieldLength>}' /var/lib/chef/solr/conf/solrconfig.xml
+
+    service chef-solr restart
 fi
-
-perl -i -pe 's{<maxFieldLength>.*</maxFieldLength>}{<maxFieldLength>200000</maxFieldLength>}' /var/lib/chef/solr/conf/solrconfig.xml
-
-service chef-solr restart
 
 if [[ ! -e ~/.chef/knife.rb ]]; then
     yes '' | knife configure -i
+    knife configure client ~/.chef
+fi
+
+if [[ ! -e /home/crowbar/.chef/knife.rb ]]; then
+    yes '' |sudo -u crowbar -H -i -- knife configure -i
 fi
 
 chef-client
