@@ -6,30 +6,6 @@
     -d /opt/dell/barclamps/crowbar ]] || \
     { echo "Not an admin node, not creating client"; exit 0; }
 
-# Re-run barclamp install for crowbar to upload cookbooks and stuff to the now
-# running chef server
-
-if [[ -d /opt/dell/barclamps/crowbar/chef/cookbooks ]]; then
-    /opt/dell/bin/barclamp_install.rb --debug --deploy --no-install-actions crowbar
-elif [[ -d /opt/dell/chef/cookbooks ]]; then
-    # OK, now load all the cookbooks, data bags, and roles
-    (   cd /opt/dell/chef
-        knife cookbook upload -o cookbooks --all
-        knife role from file roles/*.rb
-        for d in data_bags/*; do
-            [[ -d $d ]] || continue
-            knife data bag create "${d##*/}"
-            for bag in "$d/"*.json; do
-                knife data bag from file "${d##*/}" "$bag"
-            done
-        done
-    )
-else
-    # o noes, panic
-    echo "Cannot find cookbook information to upload!"
-    exit 1
-fi
-
 FQDN=$(hostname -f)
 NODE_ROLE="crowbar-${FQDN//./_}"
 echo "$(date '+%F %T %z'): Create Admin node role"
