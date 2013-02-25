@@ -64,22 +64,26 @@ def add_and_filter(file, add, filter_re)
       else
 	lines << l
       end
-    else 
+    else
       lines << 1
     end
-  } 
-  
+  }
+
   puts "need to add: #{need_to_add} remove: #{need_to_remove}"
   updated =  need_to_add or need_to_remove
-  
+
   if need_to_remove
     lines << add if need_to_add
     need_to_add = false
-    open(file, "w+") {|f| f.write lines }
+    open(file, "w+") do |f|
+      lines.each do |l|
+        f.write(l)
+      end
+    end
   end
-  open(file, "a") {|f| 
-    f.write "#{add}\n"
-  } if need_to_add
+  open(file, "a") do |f|
+    f.puts "#{add}"
+  end if need_to_add
 
   return updated
 
@@ -89,13 +93,14 @@ end
 
 
 action :add do
-  updated = add_and_filter(@new_resource.file, 
-			   @new_resource.name, @new_resource.regexp_exclude)
+  updated = add_and_filter(@new_resource.file,
+			   @new_resource.name,
+                           @new_resource.regexp_exclude)
   @new_resource.updated_by_last_action(true) if updated
 end
 
 action :remove do
-  updated = add_and_filter(@new_resource.file,nil, 
+  updated = add_and_filter(@new_resource.file,nil,
 			   "^#{@new_resource.name}$")
   @new_resource.updated_by_last_action(true) if updated
-end 
+end
