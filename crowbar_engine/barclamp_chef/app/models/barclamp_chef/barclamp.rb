@@ -15,7 +15,7 @@
 #
 
 
-module BarclampChef
+module BarclampChef  
   class Barclamp < Barclamp
 =begin
     Expected to be called as part of commiting a proposal.
