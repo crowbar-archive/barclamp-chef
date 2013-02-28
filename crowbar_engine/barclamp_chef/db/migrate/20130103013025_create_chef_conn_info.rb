@@ -17,8 +17,9 @@ class CreateChefConnInfo < ActiveRecord::Migration
       t.string :url
       t.string :client_name
       t.string :key
-      t.string :key_file_name
       t.references :jig_chef
     end
+    
+    add_index :barclamp_chef_jig_chef_conn_infos, [:url, :client_name], :unique => true, :name =>"bc_chef_unique_clients"
   end
 end
