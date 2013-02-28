@@ -13,7 +13,7 @@
 #
 class CreateChefConnInfo < ActiveRecord::Migration
   def change
-    create_table :jig_chef_conn_infos do |t|
+    create_table :barclamp_chef_jig_chef_conn_infos do |t|
       t.string :url
       t.string :client_name
       t.string :key
