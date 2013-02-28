@@ -16,11 +16,17 @@
 namespace :crowbar do
   namespace :chef do 
 
+    def print_args(args)
+      args.each { |k,v|  puts "#{k}: #{v}"}
+    end
+
     desc "install a chef connection info record"
     task :inject_conn, [:url, :name, :key_file ] => :environment do |t, args|    
-      key = IO.read(File.expand_path(args[:key_file]))
+      #print_args(args)
+      #print_args(ENV)
+      key = IO.read(File.expand_path(ENV['key_file']))
       c = BarclampChef::JigChefConnInfo.create(
-        :url=>args[:url],:client_name=>args[:name],:key=>key)
+          :url=>ENV['url'],:client_name=>ENV['name'],:key=>key)
       c.save!
     end
 
