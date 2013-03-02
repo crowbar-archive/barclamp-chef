@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+require 'json'
+
 namespace :crowbar do
   namespace :chef do 
 
@@ -42,6 +44,20 @@ namespace :crowbar do
       x = BarclampChef::JigChefConnInfo.delete_all
       puts "deleted #{x} records"
     end
+
+    desc "find the running chef server info (local machine), and extract the requested path"
+    task :running_chef_info, [:file, :path ] do
+      f = ENV['file'] || '/etc/chef-server/chef-server-running.json'
+      p = ENV['path'] || 'chef_server.nginx'  # seems a reasonable default...
+      f =File.read(f)
+      j = JSON.parse(f)
+      p.split('.').each { |k| 
+        j = j[k]
+      }
+      j = JSON.pretty_generate(j) if j.kind_of?(Hash)
+      puts j
+    end
+
   end
 end
 
