@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.summary     = " Summary of BarclampChef."
   s.description = " Description of BarclampChef."
 
-  s.files = Dir["{app,config,db,lib}/**/*"] + ["Rakefile"]
+  s.files = Dir["{app,config,db,lib}/**/*"] + []
   s.test_files = Dir["test/**/*"]
 
   s.add_dependency "rails"
