@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x  # be verbose...
 ## only do this on real installs.
 [[  -d /tftpboot/ubuntu_dvd/dell/Version || \
     -d /tftpboot/redhat_dvd/dell/Version || \
@@ -120,7 +120,11 @@ fi
 
 if [[ ! -e /home/crowbar/.chef/knife.rb ]]; then
     mkdir /home/crowbar/.chef
-    EDITOR=/bin/true knife client create crowbar -a --file /home/crowbar/.chef/crowbar.pem
+    KEYFILE="/home/crowbar/.chef/crowbar.pem"
+    GEM_PATH=/opt/chef/embedded/lib/ruby/gems EDITOR=/bin/true knife client create crowbar -a --file $KEYFILE -VV 
+    CHEF_SERVER_URL="http://$(hostname --fqdn):4040"
+    GEMFILE="/opt/dell/crowbar_framework/Gemfile"
+    RAILS_ENV=production bundle --gemfile=$GEMFILE exec  rake crowbar:chef:inject_conn url="${CHEF_SERVER_URL}" name="crowbar" key_file=$KEYFILE
     chown -R crowbar: /home/crowbar/.chef/
     yes '' | sudo -u crowbar -H -- knife configure -y -u crowbar
 fi
