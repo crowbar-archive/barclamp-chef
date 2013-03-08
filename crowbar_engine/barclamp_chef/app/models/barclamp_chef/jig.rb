@@ -33,7 +33,17 @@ module BarclampChef
       run
     end
 
+    def create_node(node)
+      # Evil, dirty hack to create a Chef version of the node as well.
+      # This should be replaced with a direct API call once the API is working well enough.
+      system("knife node create #{node.name} --defaults -d")
+    end
 
+    def delete_node(node)
+      # Ditto.
+      system("knife node delete #{node.name}")
+      system("knife client delete #{node.name}")
+    end
     
   end # class
 end # module
