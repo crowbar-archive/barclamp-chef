@@ -22,7 +22,7 @@ module BarclampChef
     Prepare the chef objects for use, by injecting the appropriate authentication 
     info from the DB.
 =end
-    def prepare_chef_api(conn_info)
+    def self.prepare_chef_api(conn_info)
       logger.info("No Chef connection info") and return unless conn_info
       Chef::Config.node_name = conn_info.client_name
       Chef::Config.chef_server_url = conn_info.url
@@ -33,7 +33,6 @@ module BarclampChef
 
    def node(name)
      begin 
-       chef_init
        super.node name
        return Chef::Node.load(name)
      rescue Exception => e
@@ -45,7 +44,6 @@ module BarclampChef
 
     def data(bag_item)
      begin 
-       chef_init
        super.data bag_item
        return Chef::DataBag.load "crowbar/#{bag_item}"
      rescue Exception => e
@@ -56,7 +54,6 @@ module BarclampChef
 
     def client(name)
       begin
-        chef_init
         return ClientObject.new Chef::ApiClient.load(name)
       rescue Exception => e
         Rails.logger.fatal("Failed to find client: #{name} #{e.message}")
@@ -66,7 +63,6 @@ module BarclampChef
 
     def role(name)
       begin
-        chef_init
         return RoleObject.new Chef::Role.load(name)
       rescue
         return nil
@@ -79,7 +75,6 @@ module BarclampChef
 
     def query_chef
      begin
-       chef_init
        return Chef::Search::Query.new
      rescue
        return Chef::Node.new
