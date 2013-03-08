@@ -41,8 +41,8 @@ module BarclampChef
 
     def delete_node(node)
       # Ditto.
-      system("knife node delete #{node.name}")
-      system("knife client delete #{node.name}")
+      system("knife node delete -y #{node.name}")
+      system("knife client delete -y #{node.name}")
     end
     
   end # class
