@@ -121,10 +121,12 @@ fi
 if [[ ! -e /home/crowbar/.chef/knife.rb ]]; then
     mkdir /home/crowbar/.chef
     KEYFILE="/home/crowbar/.chef/crowbar.pem"
-    GEM_PATH=/opt/chef/embedded/lib/ruby/gems EDITOR=/bin/true knife client create crowbar -a --file $KEYFILE -VV 
-    CHEF_SERVER_URL="http://$(hostname --fqdn):4040"
-    GEMFILE="/opt/dell/crowbar_framework/Gemfile"
-    RAILS_ENV=production bundle --gemfile=$GEMFILE exec  rake crowbar:chef:inject_conn url="${CHEF_SERVER_URL}" name="crowbar" key_file=$KEYFILE
+    EDITOR=/bin/true knife client create crowbar -a --file $KEYFILE -VV 
+    CHEF_SERVER_URL="http://$(hostname --fqdn):4000"
+    ( 
+        cd /opt/dell/crowbar_framework
+        RAILS_ENV=production bundle exec rake crowbar:chef:inject_conn url="${CHEF_SERVER_URL}" name="crowbar" key_file=$KEYFILE
+    )  
     chown -R crowbar: /home/crowbar/.chef/
     yes '' | sudo -u crowbar -H -- knife configure -y -u crowbar
 fi
