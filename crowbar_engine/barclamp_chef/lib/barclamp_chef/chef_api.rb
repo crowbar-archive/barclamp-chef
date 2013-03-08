@@ -24,9 +24,10 @@ module BarclampChef
 =end
     def self.prepare_chef_api(conn_info)
       logger.info("No Chef connection info") and return unless conn_info
-      Chef::Config.node_name = conn_info.client_name
-      Chef::Config.chef_server_url = conn_info.url
-      ReplacementAuthMod.replace_authenticator(conn_info.client_name, conn_info.key)
+      #Chef::Config.node_name = conn_info.client_name
+      #Chef::Config.chef_server_url = conn_info.url
+      #Chef::Config.client_key='/home/crowbar/.chef/crowbar.pem'
+      ReplacementAuthMod.replace_authenticator(conn_info.url,conn_info.client_name, conn_info.key)
     end
 
   end

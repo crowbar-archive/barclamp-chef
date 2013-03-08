@@ -1,42 +1,44 @@
+# Copyright 2013, Dell
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Author: aabes
 
-#####
 # allow us to replace the authenticator that the chef API uses
-
-
+# with information from the db
 module ReplacementAuthMod
-  @@replacement_auth_credentials = nil
+  @@client_name = nil
+  @@raw_key = nil
+  @@url = nil
 
-  def self.replace_authenticator(client_name,raw_key)
-    @@replacement_auth_credentials = ReplacementAuth.new(client_name,raw_key)
+  def self.replace_authenticator(url, client_name,raw_key)
+    @@client_name = client_name
+    @@raw_key = raw_key
+    @@url = url
   end
 
-  #####
-  # a replacement to the AuthCredentials chef class, which is
-  # provided with the signing key.
-  class ReplacementAuth < Chef::REST::AuthCredentials
-    def initialize(client_name=nil, raw_key=nil)
-      @client_name = client_name
-      @key = OpenSSL::PKey::RSA.new(raw_key)
-    end
-
-    def sign_requests?
-      true
-    end
-  end
-  
-  def self.new(url, client_name=Chef::Config[:node_name], signing_key_filename=nil, options={})
-    r = Chef::REST.new(url,client_name,signing_key_filename,options)
-    ## handle the case were chef is accessed before we get to it.
-    unless @@replacement_auth_credentials.nil?
-      r.auth_credentials=@@replacement_auth_credentials             
+  class Chef::REST
+    class << self 
+      alias_method :orig_new, :new
+      def new(url, client_name=Chef::Config[:node_name], signing_key_filename=nil, options={})
+        if @@client_name
+          url, client_name, options[:raw_key]=@@url, @@client_name, @@raw_key
+          signing_key_filename=nil
+        end
+        r = Chef::REST.orig_new(url,client_name,signing_key_filename,options)
+      end
     end
   end
-
-
-#  def self.included(base)
-#    base.__send__(:alias_method, :orig_initialize, :initialize)
-#    base.__send__(:alias_method, :initialize, :initialize_replacement )
-#  end
 end
 
 Chef::REST.__send__(:include, ReplacementAuthMod)
