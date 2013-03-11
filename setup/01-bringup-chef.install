@@ -61,6 +61,29 @@ EOF
     mkdir -p /etc/chef
     ln -s /etc/chef-server/chef-webui.pem /etc/chef/webui.pem
     ln -s /etc/chef-server/chef-validator.pem /etc/chef/validation.pem
+    cat > /etc/init.d/chef-server <<EOF
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          chef-server
+# Required-Start:    \$syslog \$network \$named
+# Required-Stop:     \$syslog \$network \$named
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start chef-server at boot time
+# Description:       Enable chef server
+### END INIT INFO
+
+# chkconfig 2345 10 90
+# description Chef Server wrapper
+exec chef-server-ctl "\$@"
+EOF
+    chmod 755 /etc/init.d/chef-server
+    if [[ $OS = ubuntu ]]; then
+        update-rc.d chef-server defaults
+        update-rc.d chef-server enable
+    else
+        chkconfig chef-server on
+    fi
 elif [[ $OS = suse ]]; then
     # Default password in chef webui to password
     sed -i 's/web_ui_admin_default_password ".*"/web_ui_admin_default_password "password"/' \
