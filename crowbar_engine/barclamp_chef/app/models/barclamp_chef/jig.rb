@@ -37,12 +37,21 @@ module BarclampChef
       # Evil, dirty hack to create a Chef version of the node as well.
       # This should be replaced with a direct API call once the API is working well enough.
       system("knife node create #{node.name} --defaults -d")
+      system("knife role create crowbar-#{node.name.tr('.','_')} --defaults -d")
+      unless node.admin
+        FileUtils.mkdir_p("/updates/#{node.name}")
+        system("knife client create #{node.name} -f \"/updates/#{node.name}/client.pem\"")
+      end
     end
 
     def delete_node(node)
       # Ditto.
       system("knife node delete -y #{node.name}")
       system("knife client delete -y #{node.name}")
+      if File.exists?("/updates/#{node.name}/client.pem")
+        File.unlink("/updates/#{node.name}/client.pem")
+      end
+      system("knife role delete -y crowbar-#{node.name.tr('.','_')}")
     end
     
   end # class
