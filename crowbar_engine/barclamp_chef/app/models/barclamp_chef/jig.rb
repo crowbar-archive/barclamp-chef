@@ -54,6 +54,7 @@ module BarclampChef
       end
       Rails.logger.info(%x{knife role delete -y "crowbar-#{node.name.tr('.','_')}"})
     end
+
 =begin
   Defined by the framework #Jig base class. Return a JSON representation of the 
   information this jig knows about this node.
