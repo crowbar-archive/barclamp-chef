@@ -19,7 +19,7 @@ require 'barclamp_chef/chef_api'
 module BarclampChef 
   class Jig < Jig
   
-    has_one :jig_chef_conn_info, :dependent => :destroy, :source => :jig_chef
+    has_one :jig_chef_conn_info, :dependent => :destroy
   
     def create_event(config)
       evt = JigEvent.create(:type=>"JigEvent", :proposal_confing =>config, 
