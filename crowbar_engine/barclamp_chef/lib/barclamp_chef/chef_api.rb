@@ -15,12 +15,16 @@
 require File.join(File.dirname(__FILE__),"monkeypatch","rest")
 
 module BarclampChef
-
   class ChefAPI
 
 =begin
     Prepare the chef objects for use, by injecting the appropriate authentication 
     info from the DB.
+    Note that because of the way chef internal code is written, these settings are
+    GLOBAL for the app...(have to use static overrides to inject the connection info since
+    Node,Query,Data bag and frieds do funny inconsistent things (as of Chef 11.04))
+
+    When support for lots of chef servers is possibly added.. this should be addressed.
 =end
     def self.prepare_chef_api(conn_info)
       logger.info("No Chef connection info") and return unless conn_info
@@ -30,9 +34,36 @@ module BarclampChef
       ReplacementAuthMod.replace_authenticator(conn_info.url,conn_info.client_name, conn_info.key)
     end
 
-  end
 
-   def node(name)
+
+
+=begin
+  Get a list of the nodes' names as know to chef.
+  Returns an array of node names.
+=end
+    def get_node_names
+      l = Chef::Node.list
+      nl.keys
+    end
+
+=begin
+  Given a node name, load the Chef node data into object form.  
+=end
+    def load_node(name)
+      Chef::Node.load(name)
+    end
+
+=begin
+  Return a hash in the form of node-name=>chef node object.
+  This should only be used within the chef barclamp!.
+=end
+    def get_inflated_node_list
+      nl = Chef::Node.list(true)
+    end
+
+private
+ 
+    def node(name)
      begin 
        super.node name
        return Chef::Node.load(name)
@@ -41,8 +72,8 @@ module BarclampChef
        return nil
      end
     end
-
-
+    
+    
     def data(bag_item)
      begin 
        super.data bag_item
@@ -52,7 +83,7 @@ module BarclampChef
        return nil
      end
     end
-
+    
     def client(name)
       begin
         return ClientObject.new Chef::ApiClient.load(name)
@@ -61,7 +92,7 @@ module BarclampChef
         return nil
       end
     end
-
+    
     def role(name)
       begin
         return RoleObject.new Chef::Role.load(name)
@@ -69,17 +100,19 @@ module BarclampChef
         return nil
       end
     end
-
+    
     def chef_escape(str)
      str.gsub("-:") { |c| '\\' + c }
     end
-
+    
     def query_chef
-     begin
-       return Chef::Search::Query.new
-     rescue
-       return Chef::Node.new
-     end
+      begin
+        chef_init
+        return Chef::Search::Query.new
+      rescue
+        return Chef::Node.new
+      end
     end
 
-end
+  end #ChefAPI
+end # module
