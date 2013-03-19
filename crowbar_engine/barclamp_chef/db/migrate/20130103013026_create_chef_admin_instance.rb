@@ -14,8 +14,9 @@
 class CreateChefAdminInstance < ActiveRecord::Migration
   def up
     ### this will soon  move to be created as part of applying the chef proposal...
-    BarclampChef::Jig.find_or_create_by_name :name =>'admin_chef', :order => 100
-    BarclampChef::Jig.find_or_create_by_name :name =>'chef', :order => 200
+    if Rails.env.production?
+      BarclampChef::Jig.find_or_create_by_name :name =>'admin_chef', :order => 100 
+    end
   end
 
   def down

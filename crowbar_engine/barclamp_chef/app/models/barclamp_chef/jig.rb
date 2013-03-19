@@ -13,8 +13,10 @@
 # limitations under the License.
 #
 #
-module BarclampChef
 
+require 'barclamp_chef/chef_api'
+
+module BarclampChef 
   class Jig < Jig
   
     has_one :jig_chef_conn_info, :dependent => :destroy
@@ -27,7 +29,7 @@ module BarclampChef
   
     def create_run_for(evt, nr,order)
       run = JigRunChef.create(:type=> "JigRunChef", :jig_event => evt, 
-        :node_role => nr, :order=>order, :status => JigRun::RUN_PENDING, 
+        :role => nr, :order=>order, :status => JigRun::RUN_PENDING, 
         :name=>"run_#{evt.id}_#{nr.id}_#{order}")
       run
     end
@@ -37,7 +39,7 @@ module BarclampChef
       # This should be replaced with a direct API call once the API is working well enough.
       Rails.logger.info(%x{knife node create #{node.name} --defaults -d})
       Rails.logger.info(%x{knife role create "crowbar-#{node.name.tr('.','_')}" --defaults -d})
-      dest = if node.admin then "/etc/chef" else "/updates/#{node.name}" end
+      dest = node.admin ? "/etc/chef" : "/updates/#{node.name}" 
       Rails.logger.info(%x{sudo mkdir -p "#{dest}"})
       Rails.logger.info(%x{sudo knife client create #{node.name} --defaults -d -f "#{dest}/client.pem"})
     end
@@ -52,5 +54,16 @@ module BarclampChef
       end
       Rails.logger.info(%x{knife role delete -y "crowbar-#{node.name.tr('.','_')}"})
     end
+
+=begin
+  Defined by the framework #Jig base class. Return a JSON representation of the 
+  information this jig knows about this node.
+=end    
+    def read_node_data(node)
+      BarclampChef::ChefAPI.prepare_chef_api(jig_chef_conn_info)
+      n= BarclampChef::ChefAPI.load_node(node.name)
+      return JSON.parse('{}') unless n
+      n.merged_attributes.to_json
+    end   
   end # class
 end # module
