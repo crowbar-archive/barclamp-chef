@@ -13,8 +13,7 @@
 # limitations under the License.
 #
 #
-
-module BarclampChef 
+module BarclampChef
 
   class Jig < Jig
   
@@ -36,14 +35,22 @@ module BarclampChef
     def create_node(node)
       # Evil, dirty hack to create a Chef version of the node as well.
       # This should be replaced with a direct API call once the API is working well enough.
-      system("knife node create #{node.name} --defaults -d")
+      Rails.logger.info(%x{knife node create #{node.name} --defaults -d})
+      Rails.logger.info(%x{knife role create "crowbar-#{node.name.tr('.','_')}" --defaults -d})
+      dest = if node.admin then "/etc/chef" else "/updates/#{node.name}" end
+      Rails.logger.info(%x{sudo mkdir -p "#{dest}"})
+      Rails.logger.info(%x{sudo knife client create #{node.name} --defaults -d -f "#{dest}/client.pem"})
     end
 
     def delete_node(node)
       # Ditto.
-      system("knife node delete -y #{node.name}")
-      system("knife client delete -y #{node.name}")
+      raise "Cannot delete admin node #{node.name}" if node.admin
+      Rails.logger.info(%x{knife node delete -y #{node.name}})
+      Rails.logger.info(%x{knife client delete -y #{node.name}})
+      if File.exists?("/updates/#{node.name}/client.pem")
+        Rails.logger.info(%x{sudo rm -rf "/updates/#{node.name}"})
+      end
+      Rails.logger.info(%x{knife role delete -y "crowbar-#{node.name.tr('.','_')}"})
     end
-    
   end # class
 end # module
