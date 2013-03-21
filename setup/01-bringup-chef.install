@@ -153,5 +153,3 @@ if [[ ! -e /home/crowbar/.chef/knife.rb ]]; then
     chown -R crowbar: /home/crowbar/.chef/
     yes '' | sudo -u crowbar -H -- knife configure -y -u crowbar
 fi
-
-chef-client
