@@ -60,6 +60,7 @@ module BarclampChef
   information this jig knows about this node.
 =end    
     def read_node_data(node)
+Rails.logger.debug "ZEHICLE #{node.name} Chef Jig"
       BarclampChef::ChefAPI.prepare_chef_api(jig_chef_conn_info)
       n= BarclampChef::ChefAPI.load_node(node.name)
       return JSON.parse('{}') unless n
