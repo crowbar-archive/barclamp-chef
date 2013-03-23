@@ -35,7 +35,7 @@ namespace :crowbar do
             :url=>ENV['url'],
             :client_name=>ENV['name'],
             :key=>key, 
-            :jig_chef => j)
+            :jig_chef_id => j.id)
         c.save!
         puts "installed chef #{j.name} server at #{c.url}"
       end
