@@ -15,7 +15,7 @@
 require File.join(File.dirname(__FILE__),"monkeypatch","rest")
 
 module BarclampChef
-  class ChefAPI
+  class ChefApi
 
 =begin
     Prepare the chef objects for use, by injecting the appropriate authentication 
@@ -42,8 +42,7 @@ module BarclampChef
   Returns an array of node names.
 =end
     def get_node_names
-      l = Chef::Node.list
-      nl.keys
+      Chef::Node.list.keys
     end
 
 =begin
@@ -114,5 +113,5 @@ private
       end
     end
 
-  end #ChefAPI
+end #ChefApi
 end # module
