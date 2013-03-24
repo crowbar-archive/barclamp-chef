@@ -19,10 +19,10 @@ require 'barclamp_chef/chef_api'
 module BarclampChef 
   class Jig < Jig
   
-    has_one :jig_chef_conn_info, :dependent => :destroy, :foreign_key => :jig_chef_id
+    has_one :jig_chef_conn_info, :dependent => :destroy, :foreign_key => :jig_chef_id, :class_name=>'BarclampChef::JigChefConnInfo'
   
     def create_event(config)
-      evt = JigEvent.create(:type=>"JigEvent", :proposal_confing =>config, 
+      evt = JigEvent.create(:type=>"JigEvent", :proposal_config=>config, 
         :jig => self, :status => JigEvent::EVT_PENDING, :name=>"apply_#{config.id}")
       evt
     end
@@ -60,8 +60,9 @@ module BarclampChef
   information this jig knows about this node.
 =end    
     def read_node_data(node)
-      BarclampChef::ChefAPI.prepare_chef_api(jig_chef_conn_info)
-      n= BarclampChef::ChefAPI.load_node(node.name)
+Rails.logger.debug "ZEHICLE #{node.name} Chef Jig"
+      BarclampChef::ChefApi.prepare_chef_api(jig_chef_conn_info)
+      n= BarclampChef::ChefApi.load_node(node.name)
       return JSON.parse('{}') unless n
       n.merged_attributes.to_json
     end   

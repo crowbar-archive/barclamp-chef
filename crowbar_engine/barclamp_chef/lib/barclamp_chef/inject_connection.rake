@@ -23,13 +23,22 @@ namespace :crowbar do
     end
 
     desc "install a chef connection info record"
-    task :inject_conn, [:url, :name, :key_file ] => :environment do |t, args|    
+    task :inject_conn, [:url, :name, :key_file ] => :environment do |t, args| 
       #print_args(args)
-      #print_args(ENV)
+      print_args(ENV)
       key = IO.read(File.expand_path(ENV['key_file']))
-      c = BarclampChef::JigChefConnInfo.create(
-          :url=>ENV['url'],:client_name=>ENV['name'],:key=>key)
-      c.save!
+      Jig.transaction do
+        # find or create the jig that we are going to use
+        j = BarclampChef::Jig.find_or_create_by_name :name =>'admin_chef', :order => 100 #, :active => true
+        # register the connection info
+        c = BarclampChef::JigChefConnInfo.create(
+            :url=>ENV['url'],
+            :client_name=>ENV['name'],
+            :key=>key, 
+            :jig_chef_id => j.id)
+        c.save!
+        puts "installed chef #{j.name} server at #{c.url}"
+      end
     end
 
     desc "list current connections from the DB"
