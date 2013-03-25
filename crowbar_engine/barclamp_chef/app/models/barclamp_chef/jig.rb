@@ -79,10 +79,12 @@ class BarclampChef::Jig < Jig
 
   @@sem.synchronize do
     unless @@instance
-      @@instance = self.find_by_name('admin_chef')
-      ReplacementAuthMod.replace_authenticator(@@instance.server,@@instance.client_name,@@instance.key)
-      def self.new
-        @@instance
+      @@instance = BarclampChef::Jig.find_by_name('admin_chef')
+      if @@instance
+        ReplacementAuthMod.replace_authenticator(@@instance.server,@@instance.client_name,@@instance.key)
+        def self.new
+          @@instance
+        end
       end
     end
   end
