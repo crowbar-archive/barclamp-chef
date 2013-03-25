@@ -23,12 +23,14 @@ namespace :crowbar do
     end
 
     desc "install a chef server info record"
-    task :inject_conn, [:url, :name, :key_file ] => :environment do |t, args| 
+    task :inject_conn, [:url, :name, :key_file, :description ] => :environment do |t, args| 
       #print_args(args)
       print_args(ENV)
-      key = IO.read(File.expand_path(ENV['key_file'] || "/home/crowbar/.chef/crowbar.pem"))
+      file = ENV['key_file'] || "/home/crowbar/.chef/crowbar.pem"
+      raise "you must supply valid file! Cannot find: #{file}" unless File.exist? file
+      key = IO.read(File.expand_path(file))
       # find or create the jig that we are going to use
-      j = BarclampChef::Jig.find_or_create_by_name :name =>'admin_chef', :order => 100
+      j = BarclampChef::Jig.find_or_create_by_name :name =>'admin_chef', :order => 100, :description => (ENV['description'] || 'installed by rake crowbar:chef:inject_conn')
       j.server = ENV['url'] || "http://127.0.0.1:4000"
       j.client_name =ENV['name']  || "crowbar"
       j.key = key
