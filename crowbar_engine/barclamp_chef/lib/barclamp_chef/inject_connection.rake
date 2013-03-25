@@ -22,35 +22,30 @@ namespace :crowbar do
       args.each { |k,v|  puts "#{k}: #{v}"}
     end
 
-    desc "install a chef connection info record"
+    desc "install a chef server info record"
     task :inject_conn, [:url, :name, :key_file ] => :environment do |t, args| 
       #print_args(args)
       print_args(ENV)
-      key = IO.read(File.expand_path(ENV['key_file']))
-      Jig.transaction do
-        # find or create the jig that we are going to use
-        j = BarclampChef::Jig.find_or_create_by_name :name =>'admin_chef', :order => 100 #, :active => true
-        # register the connection info
-        c = BarclampChef::JigChefConnInfo.create(
-            :url=>ENV['url'],
-            :client_name=>ENV['name'],
-            :key=>key, 
-            :jig_chef_id => j.id)
-        c.save!
-        puts "installed chef #{j.name} server at #{c.url}"
-      end
+      key = IO.read(File.expand_path(ENV['key_file'] || "/home/crowbar/.chef/crowbar.pem"))
+      # find or create the jig that we are going to use
+      j = BarclampChef::Jig.find_or_create_by_name :name =>'admin_chef', :order => 100
+      j.server = ENV['url'] || "http://127.0.0.1:4000"
+      j.client_name =ENV['name']  || "crowbar"
+      j.key = key
+      j.save!
+      puts "installed chef #{j.name} server at #{j.server}"
     end
 
-    desc "list current connections from the DB"
+    desc "list current servers from the DB"
     task :list_conn => :environment do 
-      BarclampChef::JigChefConnInfo.all.each { |jc| 
-        puts "url: #{jc.url}, client: #{jc.client_name}"
+      BarclampChef::Jig.all.each { |jc| 
+        puts "name: #{jc.name}, url: #{jc.server}, client: #{jc.client_name}"
       }
     end
 
-    desc "remove all current connections from the DB"
+    desc "remove all current servers from the DB"
     task :clear_conn => :environment do 
-      x = BarclampChef::JigChefConnInfo.delete_all
+      x = BarclampChef::Jig.delete_all
       puts "deleted #{x} records"
     end
 

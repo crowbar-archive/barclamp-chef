@@ -23,28 +23,23 @@ module BarclampChef
 =end
   
     def commit_proposal(proposal)
+      raise "this is old approach - not implemented!"
       config = proposal.current_config.config_hash["chef"]
       @logger.info "config is: #{config.inspect}"
       JigChef.transaction {      
         config["servers"].each { | srv_name, srv |  
           c = JigChef.find_by_name(srv_name)
           if c.nil? 
-            JigChef.create( :name=>srv_name, :type=>JigChef.name,
-              :description => srv["description"], :order => srv["order"])        
+            JigChef.create  :name=>srv_name, 
+                            :type=>JigChef.name,
+                            :description => srv["description"], 
+                            :order => srv["order"], 
+                            :connecton => srv["server_url"], 
+                            :client_name => srv["client_name"],
+                            :key => srv["client_key"]
+              
+            @logger.info "saving #{c.inspect}"
           end
-          cc = c.jig_chef_conn_info 
-          if cc.nil?
-            cc = JigChefConnInfo.create
-            cc.jig_chef = c
-          end
-  
-          #set or update connection info
-          cc.url = srv["server_url"]
-          cc.client_name=srv["client_name"]
-          cc.key = srv["client_key"]
-          @logger.info "saving #{c.inspect}"
-          cc.save!
-          c.save!
         }    
       }
     end

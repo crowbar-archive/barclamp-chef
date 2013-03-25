@@ -14,7 +14,7 @@
 #
 class BarclampImportChef < ActiveRecord::Migration
   def up
-    Barclamp.import_1x 'chef'
+    Barclamp.import 'chef'
   end
 
   def down
