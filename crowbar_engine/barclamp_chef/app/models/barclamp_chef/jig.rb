@@ -138,7 +138,7 @@ class BarclampChef::Jig < Jig
       Rails.logger.info(%x{sudo touch "#{dest}/client.pem"})
       Rails.logger.info(%x{sudo chmod 666 "#{dest}/client.pem"})
       File.open("#{dest}/client.pem","w") do |f|
-        f.puts(client.private_key)
+        f.puts(c['private_key'])
       end
       Rails.logger.info(%x{sudo chmod 444 "#{dest}/client.pem"})
       chef_node.save
