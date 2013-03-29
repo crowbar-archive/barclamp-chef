@@ -1,0 +1,29 @@
+{
+    "type": "map",
+    "required": true,
+    "mapping": {
+        "chef": {
+            "type": "map",
+            "required": true,
+            "mapping": {
+                "servers": {
+                    "type": "map",
+                    "required": true,
+                    "mapping": {
+                            = : {
+                                "type": "map",
+                                "required": true,
+                                "mapping": {
+                                    "server_url" : { "type": "str" },
+                                    "client_name" : { "type": "str" },
+                                    "client_key" : { "type": "str" },
+                                    "description" : { "type": "str" },
+                                    "order" : { "type": int }
+                                }
+                            }
+                    }
+                }
+            }
+        }
+    }
+}
