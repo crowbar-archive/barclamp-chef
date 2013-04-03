@@ -17,7 +17,7 @@
 
 barclamp:
   name: chef
-  display: Chef deployment management
+  display: Chef
   description: Provide services to Crowbar to allow deployment with Chef cookbooks
   online_help: 'https://github.com/dellcloudedge/crowbar/wiki'
   version: 0
