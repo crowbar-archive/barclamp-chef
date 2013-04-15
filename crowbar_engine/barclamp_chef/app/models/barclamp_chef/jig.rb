@@ -89,19 +89,6 @@ class BarclampChef::Jig < Jig
     end
   end
 
-  def create_event(config)
-    evt = JigEvent.create(:type=>"JigEvent", :proposal_config=>config, 
-      :jig => self, :status => JigEvent::EVT_PENDING, :name=>"apply_#{config.id}")
-    evt
-  end
-
-  def create_run_for(evt, nr,order)
-    run = JigRunChef.create(:type=> "JigRunChef", :jig_event => evt, 
-      :role => nr, :order=>order, :status => JigRun::RUN_PENDING, 
-      :name=>"run_#{evt.id}_#{nr.id}_#{order}")
-    run
-  end
-
 =begin
   Get a list of the node names as know to chef.
   Returns an array of node names.
@@ -169,9 +156,7 @@ Defined by the framework #Jig base class. Return a JSON representation of the
 information this jig knows about this node.
 =end
   def read_node_data(node)
-    Rails.logger.debug "ZEHICLE #{node.name} Chef Jig"
     n = Chef::Node.load(node.name)
-    return JSON.parse('{}') unless n
-    n.merged_attributes.to_json
+    JSON.parse(n.nil? ? '{}' : n.merged_attributes.to_json)
   end
 end # class
