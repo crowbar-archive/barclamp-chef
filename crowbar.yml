@@ -17,7 +17,7 @@
 
 barclamp:
   name: chef
-  display: Chef
+  display: Chef Interface
   description: Provide services to Crowbar to allow deployment with Chef cookbooks
   online_help: 'https://github.com/dellcloudedge/crowbar/wiki'
   version: 0
@@ -25,15 +25,14 @@ barclamp:
   copyright: "Dell, Inc 2013"
   api_version: "v2"
   api_version_accepts: "v2"
-  proposal_schema_version: 1
-  member:
-    - crowbar
 
+jigs:
+  chef:
+    roles:
+    
 crowbar:
-  layout: 1.9
+  layout: 2.0
   order: 1
-  run_order: 1
-  chef_order: 1
   proposal_schema_version: 2
 
 debs:
