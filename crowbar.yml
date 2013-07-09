@@ -38,20 +38,20 @@ crowbar:
 debs:
   ubuntu-12.04:
     raw_pkgs:
-      - https://opscode-omnitruck-release.s3.amazonaws.com/ubuntu/12.04/x86_64/chef-server_11.0.6-1.ubuntu.12.04_amd64.deb
-      - https://opscode-omnitruck-release.s3.amazonaws.com/ubuntu/11.04/x86_64/chef_10.24.0-1.ubuntu.11.04_amd64.deb
+      - https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/12.04/x86_64/chef-server_11.0.8-1.ubuntu.12.04_amd64.deb
+      - https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/11.04/x86_64/chef_10.26.0-1.ubuntu.11.04_amd64.deb
   required_pkgs:
     - chef-server
     - chef
 rpms:
-  redhat-6.2:
+  redhat-6.4:
     raw_pkgs:
-      - https://opscode-omnitruck-release.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.6-1.el6.x86_64.rpm
-      - https://opscode-omnitruck-release.s3.amazonaws.com/el/6/x86_64/chef-10.24.0-1.el6.x86_64.rpm
-  centos-6.2:
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.8-1.el6.x86_64.rpm
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-10.26.0-1.el6.x86_64.rpm
+  centos-6.4:
     raw_pkgs:
-      - https://opscode-omnitruck-release.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.6-1.el6.x86_64.rpm
-      - https://opscode-omnitruck-release.s3.amazonaws.com/el/6/x86_64/chef-10.24.0-1.el6.x86_64.rpm
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.8-1.el6.x86_64.rpm
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-10.26.0-1.el6.x86_64.rpm
   required_pkgs:
     - chef-server
     - chef
