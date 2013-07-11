@@ -26,10 +26,6 @@ barclamp:
   api_version: "v2"
   api_version_accepts: "v2"
 
-jigs:
-  chef:
-    roles:
-    
 crowbar:
   layout: 2.0
   order: 1
