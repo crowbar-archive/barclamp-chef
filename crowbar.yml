@@ -31,6 +31,18 @@ crowbar:
   order: 1
   proposal_schema_version: 2
 
+roles:
+  - name: chef-server
+    jig: script
+    description: 'Provides a chef-server instance.'
+  - name: chef-client
+    jig: script
+    description: 'Provides a chef client.'
+    requires:
+      - chef-server
+    flags:
+      - implicit
+
 debs:
   ubuntu-12.04:
     raw_pkgs:
