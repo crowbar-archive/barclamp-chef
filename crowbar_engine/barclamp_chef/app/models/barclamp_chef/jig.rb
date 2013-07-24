@@ -15,148 +15,131 @@
 #
 
 require 'json'
-require 'chef'
 
-module ReplacementAuthMod
-  @@client_name = nil
-  @@raw_key = nil
-  @@url = nil
-  @@active = false
-  @@sem = Mutex.new
 
-  def self.replace_authenticator(url, client_name, raw_key)
-    unless @@active
-      @@sem.synchronize do
-        @@client_name = client_name
-        @@raw_key = raw_key
-        @@url = url
-        Chef::REST.__send__(:include, ReplacementAuthMod)
-        @@active=true
-      end
+# Wrapper around a bare minimum of functionaloty needed to represent Chef nodes.
+class ChefNode
+
+  attr_reader :data
+
+  # Get all the node names that Chef knows about.
+  def self.names
+    IO.popen("knife node list") do |p|
+      return p.readlines.map {|n|n.strip}
+    end
+  end
+  
+  def initialize(n)
+    name = self.class.namify(n)
+    IO.popen("knife node show -f json #{name}") do |p|
+      @data = JSON.parse(p.read)
     end
   end
 
-  def self.client_name
-    @@client_name
+  # Create a new Chef node object and return it.
+  def self.create(n)
+    name = namify(n)
+    raise "Could not create Chef node #{name}" unless system("knife node create #{name}")
+    self.new(name)
   end
 
-  def self.raw_key
-    @@raw_key
+  def destroy(n)
+    name = self.class.namify(n)
+    raise "Could not destroy Chef node #{name}" unless system("knife node destroy #{name}")
   end
 
-  def self.url
-    @@url
-  end
+  private
 
-  def self.active
-    @@active
-  end
-
-  class Chef::REST
-    alias_method :orig_initialize, :initialize
-    def initialize(url, client_name=Chef::Config[:node_name], signing_key_filename=nil, options={})
-      if ReplacementAuthMod.active
-        url = ReplacementAuthMod.url
-        client_name = ReplacementAuthMod.client_name
-        options[:raw_key] = ReplacementAuthMod.raw_key
-        signing_key_filename=nil
-      end
-      orig_initialize(url,client_name,signing_key_filename,options)
+  def self.namify(n)
+    case
+    when n.kind_of?(n) == String then n
+    when n.kind_of?(Node) then n.name
+    else raise "Cannot handle #{n.inspect!}"
     end
   end
 end
 
-# Due to the way we are injecting Chef auth info, this has to be a singleton class.
-class BarclampChef::Jig < Jig
-  @@sem = Mutex.new
-  @@instance = nil
+class ChefRole
 
-  def after_initialize
-    raise "No Chef server to talk to!" unless server
-    active = true
-    save!
+  # Get all the node names that Chef knows about.
+  def self.names
+    IO.popen("knife role list") do |p|
+      return p.readlines.map {|n|n.strip}
+    end
   end
-
-  @@sem.synchronize do
-    unless @@instance
-      @@instance = BarclampChef::Jig.find_by_name('admin_chef')
-      if @@instance
-        ReplacementAuthMod.replace_authenticator(@@instance.server,@@instance.client_name,@@instance.key)
-        def self.new
-          @@instance
-        end
-      end
+  
+  def initialize(n)
+    IO.popen("knife role show -f json #{n}") do |p|
+      @data = JSON.parse(p.read)
     end
   end
 
-=begin
-  Get a list of the node names as know to chef.
-  Returns an array of node names.
-=end
-  def get_node_names
-    Chef::Node.list.keys
+  # Create a new Chef node object and return it.
+  def self.create(n)
+    raise "Could not create Chef role #{n}" unless system("knife role create #{n}")
+    self.new(n)
   end
 
-=begin
-  Return a hash in the form of node-name=>chef node object.
-  This should only be used within the chef barclamp!.
-=end
-  def get_inflated_node_list
-    Chef::Node.list(true)
+  def destroy(n)
+    raise "Could not destroy Chef role #{n}" unless system("knife role destroy #{n}")
+  end
+
+end
+
+class ChefClient
+
+  # Get all the node names that Chef knows about.
+  def self.names
+    IO.popen("knife client list") do |p|
+      return p.readlines.map {|n|n.strip}
+    end
+  end
+  
+  def initialize(n)
+    IO.popen("knife client show -f json #{n}") do |p|
+      @data = JSON.parse(p.read)
+    end
+  end
+
+  # Create a new Chef node object and return it.
+  def self.create(n)
+    raise "Could not create Chef client #{n}" unless system("knife client create #{n}")
+    self.new(n)
+  end
+
+  def destroy(n)
+    raise "Could not destroy Chef client #{n}" unless system("knife client destroy #{n}")
+  end
+
+
+end
+
+class BarclampChef::Jig < Jig
+
+  def run(nr)
+    cb_node = nr.node
+    cb_role = nr.role
+    chef_node = ChefNode.new(nr.node.name)
+    chef_role = ChefRole.new(nr.role.name)
+    # Magically create a shiny new Chef node role with the combined attrs
+    # of all the noderole parents and a runlist of all the Chef roles from
+    # the noderole parents, and then bind it as the only entry in that node's runlist
+
+    # Then, run chef-client on the node.
   end
 
   def create_node(node)
-    @@sem.synchronize do
-      role_name = "crowbar-#{node.name.tr('.','_')}"
-      chef_node = Chef::Node.find_or_create(node.name)
-      client = Chef::ApiClient.new
-      client.name(node.name)
-      client.admin(!!node.admin)
-      c = client.save
-      raise "Chef Client for #{node.name} already exists!" unless c['private_key']
-      role = (Chef::Role.load(node.name) rescue nil)
-      unless role
-        role = Chef::Role.new
-        role.name(role_name)
-        role.save
-      end
-      dest = node.admin ? "/etc/chef" : "/updates/#{node.name}"
-      Rails.logger.info(%x{sudo mkdir -p "#{dest}"})
-      Rails.logger.info(%x{sudo touch "#{dest}/client.pem"})
-      Rails.logger.info(%x{sudo chmod 666 "#{dest}/client.pem"})
-      File.open("#{dest}/client.pem","w") do |f|
-        f.puts(c['private_key'])
-      end
-      Rails.logger.info(%x{sudo chmod 444 "#{dest}/client.pem"})
-      chef_node.save
-      true
-    end
+    Rails.logger.info("ChefJig Creating node #{node.name}")
+    ChefNode.create(node.name)
+    ChefRole.create("crowbar-#{node.name}")
+    ChefClient.create(node.name)
   end
 
   def delete_node(node)
-    raise "Cannot delete admin node #{node.name}" if node.admin
-    name = node.name
-    @@sem.synchronize do
-      role_name = "crowbar-#{name.tr('.','_')}"
-      begin
-        Chef::Node.load(name).destroy
-        Chef::ApiClient.load(name).destroy
-        Chef::Role.load(role_name).destroy
-        if File.exists?("/updates/#{name}/client.pem")
-          Rails.logger.info(%x{sudo rm -rf "/updates/#{name}"})
-        end
-      rescue Exception => e
-        Rails.logger.fatal("Could not destroy Chef node #{name}: #{e.inspect}")
-      end
-    end
+    Rails.logger.info("ChefJig Deleting node #{node.name}")
+    ChefNode.destroy(node.name)
+    ChefRole.destroy("crowbar-#{node.name}")
+    ChefClient.destroy(node.name)
   end
 
-=begin
-Defined by the framework #Jig base class. Return a JSON representation of the 
-information this jig knows about this node.
-=end
-  def read_node_data(node)
-    n = Chef::Node.load(node.name)
-    JSON.parse(n.nil? ? '{}' : n.merged_attributes.to_json)
-  end
 end # class

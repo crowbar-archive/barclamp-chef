@@ -1,11 +1,6 @@
 #!/bin/bash
 set -x  # be verbose...
 ## only do this on real installs.
-[[  -d /tftpboot/ubuntu_dvd/dell/Version || \
-    -d /tftpboot/redhat_dvd/dell/Version || \
-    -d /opt/dell/barclamps/crowbar ]] || \
-    { echo "Not an admin node, not installing Chef"; exit 0; }
-
 
 ensure_service_running () {
     service="$1"
@@ -22,13 +17,14 @@ die() {
     exit 1
 }
 
-
-service chef-client stop
+[[ -d /etc/chef-server ]] && exit 0
 
 if [[ -f /etc/redhat-release || -f /etc/centos-release ]]; then
     OS=redhat
+    yum install -y chef chef-server
 elif [[ -d /etc/apt ]]; then
     OS=ubuntu
+    apt-get -y install chef chef-server
 elif [[ -f /etc/SuSE-release ]]; then
     OS=suse
 else
@@ -49,7 +45,7 @@ erchef["url"]="http://0.0.0.0:4000"
 erchef["web_ui_client_name"]="chef-webui"
 chef_server_webui['port']=4040
 chef_server_webui['url']="http://0.0.0.0:4040"
-chef_server_webui['listen']="0.0.0.0:4040"
+chef_server_webui['listen']="0.0.0.0"
 EOF
         # Reconfigure chef-server to match what we expect.
         chef-server-ctl reconfigure
@@ -144,12 +140,7 @@ fi
 if [[ ! -e /home/crowbar/.chef/knife.rb ]]; then
     mkdir /home/crowbar/.chef
     KEYFILE="/home/crowbar/.chef/crowbar.pem"
-    EDITOR=/bin/true knife client create crowbar -a --file $KEYFILE -VV 
-    CHEF_SERVER_URL="http://$(hostname --fqdn):4000"
-    ( 
-        cd /opt/dell/crowbar_framework
-        RAILS_ENV=production bundle exec rake crowbar:chef:inject_conn url="${CHEF_SERVER_URL}" name="crowbar" key_file=$KEYFILE
-    )  
+    EDITOR=/bin/true knife client create crowbar -a --file $KEYFILE -VV
     chown -R crowbar: /home/crowbar/.chef/
     yes '' | sudo -u crowbar -H -- knife configure -y -u crowbar
 fi
