@@ -18,7 +18,7 @@ require 'json'
 
 
 # Wrapper around a bare minimum of functionaloty needed to represent Chef nodes.
-class BarclampChef::Node
+class ChefNode
 
   attr_reader :data
 
@@ -53,13 +53,13 @@ class BarclampChef::Node
   def self.namify(n)
     case
     when n.kind_of?(n) == String then n
-    when n.kind_of?(::Node) then n.name
+    when n.kind_of?(Node) then n.name
     else raise "Cannot handle #{n.inspect!}"
     end
   end
 end
 
-class BarclampChef::Role
+class ChefRole
 
   # Get all the node names that Chef knows about.
   def self.names
@@ -86,7 +86,7 @@ class BarclampChef::Role
 
 end
 
-class BarclampChef::Client
+class ChefClient
 
   # Get all the node names that Chef knows about.
   def self.names
@@ -115,12 +115,12 @@ class BarclampChef::Client
 end
 
 class BarclampChef::Jig < Jig
-  
+
   def run(nr)
     cb_node = nr.node
-    cb_role = nr.role 
-    chef_node = BarclampChef::Node.new(nr.node.name)
-    chef_role = BarclampChef::Role.new(nr.role.name)
+    cb_role = nr.role
+    chef_node = ChefNode.new(nr.node.name)
+    chef_role = ChefRole.new(nr.role.name)
     # Magically create a shiny new Chef node role with the combined attrs
     # of all the noderole parents and a runlist of all the Chef roles from
     # the noderole parents, and then bind it as the only entry in that node's runlist
@@ -130,15 +130,16 @@ class BarclampChef::Jig < Jig
 
   def create_node(node)
     Rails.logger.info("ChefJig Creating node #{node.name}")
-    BarclampChef::Node.create(node.name)
-    BarclampChef::Role.create("crowbar-#{node.name}")
-    BarclampChef::Client.create(node.name)
+    ChefNode.create(node.name)
+    ChefRole.create("crowbar-#{node.name}")
+    ChefClient.create(node.name)
   end
 
   def delete_node(node)
     Rails.logger.info("ChefJig Deleting node #{node.name}")
-    BarclampChef::Node.destroy(node.name)
-    BarclampChef::Role.destroy("crowbar-#{node.name}")
-    BarclampChef::Client.destroy(node.name)
+    ChefNode.destroy(node.name)
+    ChefRole.destroy("crowbar-#{node.name}")
+    ChefClient.destroy(node.name)
   end
+
 end # class
