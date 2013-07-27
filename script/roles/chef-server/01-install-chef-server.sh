@@ -1,6 +1,4 @@
 #!/bin/bash
-set -x  # be verbose...
-## only do this on real installs.
 
 ensure_service_running () {
     service="$1"
@@ -16,6 +14,9 @@ die() {
     echo "$(date '+%F %T %z'): $@"
     exit 1
 }
+
+write_attribute "chefjig/server/url" "http://$(hostname --fqdn):4000"
+write_attribute "chefjig/server/validator" "$(cat "/etc/chef/validation.pem")"
 
 [[ -d /etc/chef-server ]] && exit 0
 
@@ -137,6 +138,7 @@ if [[ ! -e ~/.chef/knife.rb ]]; then
     knife configure client ~/.chef
 fi
 
+# Create a client for the Crowbar user.
 if [[ ! -e /home/crowbar/.chef/knife.rb ]]; then
     mkdir /home/crowbar/.chef
     KEYFILE="/home/crowbar/.chef/crowbar.pem"

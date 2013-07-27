@@ -132,7 +132,8 @@ class BarclampChef::Jig < Jig
     Rails.logger.info("ChefJig Creating node #{node.name}")
     ChefNode.create(node.name)
     ChefRole.create("crowbar-#{node.name}")
-    ChefClient.create(node.name)
+    # chef-client will be created automatically when the chef-client noderole
+    # for a node gets committed.
   end
 
   def delete_node(node)
