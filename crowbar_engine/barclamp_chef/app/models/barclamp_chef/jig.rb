@@ -70,8 +70,18 @@ class BarclampChef::Jig < Jig
     Rails.logger.info(out)
     # Reload the node, find any attrs on it that map to ones this
     # node role cares about, and write them to the wall.
-
-
+    chef_node, chef_noderole = chef_node_and_role(nr.node)
+    Node.transaction do
+      node_disc = nr.node.discovery
+      node_disc["ohai"] = chef_node.attributes.automatic
+      nr.node.discovery = node_disc
+    end
+    nr.wall = chef_node.attributes.normal
+    chef_node.attributes.normal = {}
+    chef_noderole.default_attributes(nr.all_data)
+    chef_node.save
+    chef_noderole.save
+    nr.save!
     # Return ourselves
     return nr
   end
