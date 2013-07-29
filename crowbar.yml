@@ -47,20 +47,26 @@ roles:
 
 jigs:
   - name: chef
+    class: 'BarclampChef::Jig'
+    description: "Allow Crowbar to manage nodes using Chef"
     implementor: chef-client
+
+gems:
+  pkgs:
+    - 'chef-(~>11.6)'
 
 debs:
   ubuntu-12.04:
     raw_pkgs:
       - https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/12.04/x86_64/chef-server_11.0.8-1.ubuntu.12.04_amd64.deb
-      - https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/11.04/x86_64/chef_10.26.0-1.ubuntu.11.04_amd64.deb
+      - https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/12.04/x86_64/chef_11.6.0-1.ubuntu.12.04_amd64.deb
 
 rpms:
   redhat-6.4:
     raw_pkgs:
       - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.8-1.el6.x86_64.rpm
-      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-10.26.0-1.el6.x86_64.rpm
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-11.6.0-1.el6.x86_64.rpm
   centos-6.4:
     raw_pkgs:
       - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.8-1.el6.x86_64.rpm
-      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-10.26.0-1.el6.x86_64.rpm
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-11.6.0-1.el6.x86_64.rpm
