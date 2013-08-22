@@ -75,6 +75,7 @@ class BarclampChef::Jig < Jig
       node_disc = nr.node.discovery
       node_disc["ohai"] = chef_node.attributes.automatic
       nr.node.discovery = node_disc
+      nr.node.save!
     end
     nr.wall = chef_node.attributes.normal
     chef_node.attributes.normal = {}
