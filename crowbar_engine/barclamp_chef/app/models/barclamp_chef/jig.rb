@@ -20,6 +20,21 @@ require 'fileutils'
 
 class BarclampChef::Jig < Jig
 
+  def make_run_list(nr)
+    runlist = []
+    gatherer = lambda{|n|
+      if (nr.node.id == n.node.id) &&
+          (n.jig.id == nr.jig.id)
+        Rails.logger.info("Chefjig: Need to add #{n.role.name} to run list for #{nr.node.name}")
+        runlist << Chef::Role.load(n.role.name).to_s
+      else
+        Rails.logger.info("Chefjig: Skipping #{n.name}")
+      end
+    }
+    nr.parentwalk(gatherer)
+    Chef::RunList.new(*runlist.reverse.uniq)
+  end
+  
   def run(nr)
     chef_node, chef_noderole = chef_node_and_role(nr.node)
     chef_role = (Chef::Role.load(nr.role.name) rescue nil)
@@ -56,11 +71,12 @@ class BarclampChef::Jig < Jig
       chef_role = Chef::Role.load(nr.role.name)
     end
     chef_noderole.default_attributes(nr.all_data)
+    chef_noderole.run_list(make_run_list(nr))
     chef_noderole.save
     # For now, be bloody stupid.
     # We should really be much more clever about building
     # and maintaining the run list, but this will do to start off.
-    chef_node.run_list(Chef::RunList.new(chef_noderole.to_s,chef_role.to_s))
+    chef_node.run_list(Chef::RunList.new(chef_noderole.to_s))
     chef_node.save
     # SSH into the node and kick chef-client.
     # If it passes, go to ACTIVE, otherwise ERROR.
