@@ -93,9 +93,13 @@ class BarclampChef::Jig < Jig
       nr.node.discovery = node_disc
       nr.node.save!
     end
-    nr.wall = chef_node.attributes.normal
-    chef_node.attributes.normal = {}
+    exclude_data = nr.all_deployment_data
+    exclude_data.deep_merge!(nr.all_parent_data)
+    exclude_data.deep_merge!(nr.data)
+    exclude_data.deep_merge!(nr.sysdata)
+    nr.wall = deep_diff(exclude_data,chef_node.attributes.normal)
     chef_noderole.default_attributes(nr.all_data)
+    chef_node.attributes.normal = {}
     chef_node.save
     chef_noderole.save
     nr.save!
