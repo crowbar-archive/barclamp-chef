@@ -93,9 +93,13 @@ class BarclampChef::Jig < Jig
       nr.node.discovery = node_disc
       nr.node.save!
     end
-    nr.wall = chef_node.attributes.normal
-    chef_node.attributes.normal = {}
+    exclude_data = nr.all_deployment_data
+    exclude_data.deep_merge!(nr.all_parent_data)
+    exclude_data.deep_merge!(nr.data)
+    exclude_data.deep_merge!(nr.sysdata)
+    nr.wall = deep_diff(exclude_data,chef_node.attributes.normal)
     chef_noderole.default_attributes(nr.all_data)
+    chef_node.attributes.normal = {}
     chef_node.save
     chef_noderole.save
     nr.save!
@@ -143,5 +147,25 @@ class BarclampChef::Jig < Jig
     Chef::Config[:node_name] = client_name
   end
 
+  # Return all keys from hash A that do not exist in hash B, recursively
+  def deep_diff(a,b)
+    raise "Only pass hashes to deep_diff" unless a.kind_of?(Hash) && b.kind_of?(Hash)
+    # Base case, hashes are equal.
+    res = Hash[]
+    b.each do |k,v|
+      case
+        # Simple cases first:
+        # if a does not have a key named k, then b[k] is in the result set.
+      when !a.has_key?(k) then res[k] = v
+        # if a[k] == v, then k is not in the result set.
+      when a[k] == v then next
+        # a[k] != v, and both are Hashes.  res[k] is their deep_diff.
+      when a[k].kind_of?(Hash) && v.kind_of?(Hash) then res[k] = deep_diff(a[k],v)
+        # v wins.
+      else res[k] = v
+      end
+    end
+    res
+  end
 
 end # class
