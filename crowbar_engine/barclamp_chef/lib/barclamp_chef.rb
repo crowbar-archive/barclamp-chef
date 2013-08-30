@@ -47,7 +47,7 @@ module BarclampChef
       def on_transition(nr)
         # Create chef metadata if needed.
         NodeRole.transaction do
-          d = nr.data
+          d = nr.sysdata
           clientinfo = (d["chefjig"]["client"] || {} rescue {})
           return if clientinfo["key"]
           chefjig = Jig.where(:name => "chef").first
@@ -58,11 +58,10 @@ module BarclampChef
           clientinfo["name"] = nr.node.name
           d["chefjig"] ||= Hash.new
           d["chefjig"]["client"] = clientinfo
-          nr.data = d
+          nr.sysdata = d
           nr.save!
         end
       end
     end
-
   end
 end
