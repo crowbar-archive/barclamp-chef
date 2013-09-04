@@ -21,18 +21,15 @@ require 'fileutils'
 class BarclampChef::Jig < Jig
 
   def make_run_list(nr)
-    runlist = []
-    gatherer = lambda{|n|
-      if (nr.node.id == n.node.id) &&
-          (n.jig.id == nr.jig.id)
-        Rails.logger.info("Chefjig: Need to add #{n.role.name} to run list for #{nr.node.name}")
-        runlist << Chef::Role.load(n.role.name).to_s
-      else
-        Rails.logger.info("Chefjig: Skipping #{n.name}")
-      end
-    }
-    nr.parentwalk(gatherer)
-    Chef::RunList.new(*runlist.reverse.uniq)
+    runlist = Array.new
+    nr.node.active_node_roles.each do |n|
+      next if (n.node.id != nr.node.id) || (n.jig.id != nr.jig.id)
+      Rails.logger.info("Chefjig: Need to add #{n.role.name} to run list for #{nr.node.name}")
+      runlist << Chef::Role.load(n.role.name).to_s
+    end
+    runlist << Chef::Role.load(nr.role.name).to_s
+    Rails.logger.info("Chefjig: discovered run list: #{runlist}")
+    Chef::RunList.new(*runlist)
   end
   
   def run(nr)
@@ -70,7 +67,7 @@ class BarclampChef::Jig < Jig
       end
       chef_role = Chef::Role.load(nr.role.name)
     end
-    chef_noderole.default_attributes(nr.all_data)
+    chef_noderole.default_attributes(nr.all_transition_data)
     chef_noderole.run_list(make_run_list(nr))
     chef_noderole.save
     # For now, be bloody stupid.
@@ -80,10 +77,8 @@ class BarclampChef::Jig < Jig
     chef_node.save
     # SSH into the node and kick chef-client.
     # If it passes, go to ACTIVE, otherwise ERROR.
-    out,ok = BarclampCrowbar::Jig.ssh("root@#{nr.node.name} chef-client")
+    nr.runlog, ok = BarclampCrowbar::Jig.ssh("root@#{nr.node.name} chef-client")
     nr.state = ok ? NodeRole::ACTIVE : NodeRole::ERROR
-    # Log the results of the run using Rails.logger.info.
-    Rails.logger.info(out)
     # Reload the node, find any attrs on it that map to ones this
     # node role cares about, and write them to the wall.
     chef_node, chef_noderole = chef_node_and_role(nr.node)
@@ -94,9 +89,9 @@ class BarclampChef::Jig < Jig
       nr.node.save!
     end
     exclude_data = nr.all_deployment_data
-    exclude_data.deep_merge!(nr.all_parent_data)
-    exclude_data.deep_merge!(nr.data)
+    exclude_data.deep_merge!(nr.node.all_active_data)
     exclude_data.deep_merge!(nr.sysdata)
+    exclude_data.deep_merge!(nr.data)
     nr.wall = deep_diff(exclude_data,chef_node.attributes.normal)
     chef_noderole.default_attributes(nr.all_data)
     chef_node.attributes.normal = {}
