@@ -160,7 +160,9 @@ class BarclampChef::Jig < Jig
         # if a[k] == v, then k is not in the result set.
       when a[k] == v then next
         # a[k] != v, and both are Hashes.  res[k] is their deep_diff.
-      when a[k].kind_of?(Hash) && v.kind_of?(Hash) then res[k] = deep_diff(a[k],v)
+      when a[k].kind_of?(Hash) && v.kind_of?(Hash)
+        maybe_res = deep_diff(a[k],v)
+        res[k] = maybe_res unless maybe_res.nil? || maybe_res.empty?
         # v wins.
       else res[k] = v
       end
