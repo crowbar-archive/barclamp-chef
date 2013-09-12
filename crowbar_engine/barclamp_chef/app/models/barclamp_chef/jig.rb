@@ -17,8 +17,10 @@
 require 'json'
 require 'chef'
 require 'fileutils'
+require 'thread'
 
 class BarclampChef::Jig < Jig
+  @@load_role_mutex ||= Mutex.new
 
   def make_run_list(nr)
     runlist = Array.new
@@ -31,11 +33,10 @@ class BarclampChef::Jig < Jig
     Rails.logger.info("Chefjig: discovered run list: #{runlist}")
     Chef::RunList.new(*runlist)
   end
-  
+
   def run(nr)
     chef_node, chef_noderole = chef_node_and_role(nr.node)
-    chef_role = (Chef::Role.load(nr.role.name) rescue nil)
-    unless chef_role
+    unless (Chef::Role.load(nr.role.name) rescue nil)
       # If we did not find the role in question, then the chef
       # data from the barclamp has not been uploaded.
       # Do that here, and then set chef_role.
@@ -46,9 +47,6 @@ class BarclampChef::Jig < Jig
       role_path = "#{chef_path}/roles"
       data_bag_path = "#{chef_path}/data_bags"
       cookbook_path = "#{chef_path}/cookbooks"
-      unless File.exist?("#{role_path}/#{nr.role.name}.rb")
-        raise "Missing Chef role information for #{nr.role.barclamp.name}:#{nr.role.name}!"
-      end
       FileUtils.cd(cookbook_path) do
         unless BarclampChef.knife("cookbook upload -o . -a")
           raise "Could not upload all Chef cookbook components from #{cookbook_path}"
@@ -62,10 +60,15 @@ class BarclampChef::Jig < Jig
           raise "Could not upload Chef data bags from #{data_bag_path}/#{data_bag_name}"
         end
       end if File.directory?(data_bag_path)
-      unless BarclampChef.knife("role from file '#{role_path}/#{nr.role.name}.rb'")
-        raise "Could not load Chef role from #{role_path}/#{nr.role.name}"
+      if File.exist?("#{role_path}/#{nr.role.name}.rb")
+        @@load_role_mutex.synchronize do
+          Chef::Config[:role_path] = role_path
+          Chef::Role.from_disk(nr.role.name, "ruby").save
+        end
+      else
+        nr.role.jig_role(nr.role.name)
       end
-      chef_role = Chef::Role.load(nr.role.name)
+
     end
     chef_noderole.default_attributes(nr.all_transition_data)
     chef_noderole.run_list(make_run_list(nr))
