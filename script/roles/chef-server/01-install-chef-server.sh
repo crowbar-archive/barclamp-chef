@@ -18,9 +18,7 @@ die() {
 write_attribute "chefjig/server/url" "http://$(hostname --fqdn):4000"
 write_attribute "chefjig/server/validator" "$(cat "/etc/chef/validation.pem")"
 
-[[ -d /etc/chef-server ]] && exit 0
-
-if [[ -f /etc/redhat-release || -f /etc/centos-release ]]; then
+if [[ -f /etc/redhat-release || -f /etc/centos-release ]] && [[ ! -d /etc/chef-server ]]; then
     OS=redhat
     yum install -y chef chef-server
 elif [[ -d /etc/apt ]]; then
@@ -32,7 +30,7 @@ else
     die "Staged on to unknown OS media!"
 fi
 
-if [[ $OS = ubuntu || $OS = redhat ]]; then
+if [[ $OS = ubuntu || $OS = redhat ]] && [[ ! -x /etc/init.d/chef-server ]]; then
     # Set up initial config
     chef-server-ctl reconfigure
     mkdir -p /etc/chef-server
@@ -133,16 +131,37 @@ elif [[ $OS = suse ]]; then
     service chef-solr restart
 fi
 
-if [[ ! -e ~/.chef/knife.rb ]]; then
-    yes '' | knife configure -i
-    knife configure client ~/.chef
+if [[ ! -e $HOME/.chef/knife.rb ]]; then
+    echo "Creating chef client for root on admin node"
+    mkdir -p "$HOME/.chef"
+    EDITOR=/bin/true knife client create root -a --file "$HOME/.chef/client.pem" -u chef-webui -k /etc/chef-server/chef-webui.pem -s "http://$(hostname --fqdn):4000"
+    cat > "$HOME"/.chef/knife.rb <<EOF
+log_level                :info
+log_location             STDOUT
+node_name                'root'
+client_key               '$HOME/.chef/client.pem'
+validation_client_name   'chef-validator'
+validation_key           '/etc/chef-server/chef-validator.pem'
+chef_server_url          'http://$(hostname --fqdn):4000'
+syntax_check_cache_path  '$HOME/.chef/syntax_check_cache'
+EOF
 fi
 
 # Create a client for the Crowbar user.
 if [[ ! -e /home/crowbar/.chef/knife.rb ]]; then
+    echo "Creating chef client for Crowbar on admin node"
     mkdir /home/crowbar/.chef
     KEYFILE="/home/crowbar/.chef/crowbar.pem"
-    EDITOR=/bin/true knife client create crowbar -a --file $KEYFILE -VV
-    chown -R crowbar: /home/crowbar/.chef/
-    yes '' | sudo -u crowbar -H -- knife configure -y -u crowbar
+    EDITOR=/bin/true knife client create crowbar -a --file $KEYFILE -u chef-webui -k /etc/chef-server/chef-webui.pem
+    cat > /home/crowbar/.chef/knife.rb <<EOF
+log_level                :info
+log_location             STDOUT
+node_name                'crowbar'
+client_key               '$KEYFILE'
+validation_client_name   'chef-validator'
+validation_key           '/etc/chef-server/chef-validator.pem'
+chef_server_url          'http://$(hostname --fqdn):4000'
+syntax_check_cache_path  '/home/crowbar/.chef/syntax_check_cache'
+EOF
+    chown -R crowbar:crowbar /home/crowbar/.chef/
 fi

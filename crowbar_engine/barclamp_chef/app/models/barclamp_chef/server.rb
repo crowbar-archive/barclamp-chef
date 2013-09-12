@@ -7,8 +7,4 @@ class BarclampChef::Server < Role
     j.key = "/home/crowbar/.chef/crowbar.pem"
     j.save!
   end
-  
-  def on_error(nr)
-    raise "aieee! Failed to install chef-server, cannot create chef jig!"
-  end
 end
