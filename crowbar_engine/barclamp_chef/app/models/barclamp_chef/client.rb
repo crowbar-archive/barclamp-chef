@@ -2,9 +2,8 @@ class BarclampChef::Client < Role
   def on_transition(nr)
     # Create chef metadata if needed.
     NodeRole.transaction do
-      d = nr.sysdata
-      clientinfo = (d["chefjig"]["client"] || {} rescue {})
-      return if clientinfo["key"]
+      d = (nr.sysdata["chefjig"]["client"]["key"] rescue nil)
+      return if d
       chefjig = Jig.where(:name => "chef").first
       raise "Cannot load Chef Jig" unless chefjig
       chef_node, chef_role, chef_client = chefjig.create_node(nr.node)
@@ -19,11 +18,7 @@ class BarclampChef::Client < Role
         raise "No idea how to get the private key!"
       end
       raise "Could not create chef client!" unless private_key && private_key != ""
-      clientinfo["key"] = private_key
-      clientinfo["name"] = nr.node.name
-      d["chefjig"] ||= Hash.new
-      d["chefjig"]["client"] = clientinfo
-      nr.sysdata = d
+      nr.sysdata = {"chefjig" => {"client" => {"key" => private_key, "name" => nr.node.name}}}
       nr.save!
     end
   end
