@@ -18,7 +18,11 @@ class BarclampChef::Client < Role
         raise "No idea how to get the private key!"
       end
       raise "Could not create chef client!" unless private_key && private_key != ""
-      nr.sysdata = {"chefjig" => {"client" => {"key" => private_key, "name" => nr.node.name}}}
+      nr.sysdata = { "chefjig" =>
+        { "client" => {"key" => private_key, "name" => nr.node.name},
+          "server" => {"url" => chefjig.server}
+        }
+      }
       nr.save!
     end
   end

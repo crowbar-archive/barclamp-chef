@@ -15,9 +15,6 @@ die() {
     exit 1
 }
 
-write_attribute "chefjig/server/url" "http://$(hostname --fqdn):4000"
-write_attribute "chefjig/server/validator" "$(cat "/etc/chef/validation.pem")"
-
 if [[ -f /etc/redhat-release || -f /etc/centos-release ]] && [[ ! -d /etc/chef-server ]]; then
     OS=redhat
     yum install -y chef chef-server
@@ -34,25 +31,10 @@ if [[ $OS = ubuntu || $OS = redhat ]] && [[ ! -x /etc/init.d/chef-server ]]; the
     # Set up initial config
     chef-server-ctl reconfigure
     mkdir -p /etc/chef-server
-    # Customize to match what the rest of Crowbar expects.
-    if [[ ! -f /etc/chef-server/chef-server.rb ]]; then
-        cat >/etc/chef-server/chef-server.rb <<EOF
-# chef-server settings.
-erchef["listen"]="0.0.0.0"
-erchef["port"]=4000
-erchef["url"]="http://0.0.0.0:4000"
-erchef["web_ui_client_name"]="chef-webui"
-chef_server_webui['port']=4040
-chef_server_webui['url']="http://0.0.0.0:4040"
-chef_server_webui['listen']="0.0.0.0"
-EOF
-        # Reconfigure chef-server to match what we expect.
-        chef-server-ctl reconfigure
-        chef-server-ctl test || {
-            echo "Could not bring up valid chef server!"
-            exit 1
-        }
-    fi
+    chef-server-ctl test || {
+        echo "Could not bring up valid chef server!"
+        exit 1
+    }
     mkdir -p /etc/chef
     ln -s /etc/chef-server/chef-webui.pem /etc/chef/webui.pem
     ln -s /etc/chef-server/chef-validator.pem /etc/chef/validation.pem
@@ -134,7 +116,7 @@ fi
 if [[ ! -e $HOME/.chef/knife.rb ]]; then
     echo "Creating chef client for root on admin node"
     mkdir -p "$HOME/.chef"
-    EDITOR=/bin/true knife client create root -a --file "$HOME/.chef/client.pem" -u chef-webui -k /etc/chef-server/chef-webui.pem -s "http://$(hostname --fqdn):4000"
+    EDITOR=/bin/true knife client create root -a --file "$HOME/.chef/client.pem" -u chef-webui -k /etc/chef-server/chef-webui.pem -s "https://$(hostname --fqdn)"
     cat > "$HOME"/.chef/knife.rb <<EOF
 log_level                :info
 log_location             STDOUT
@@ -142,7 +124,7 @@ node_name                'root'
 client_key               '$HOME/.chef/client.pem'
 validation_client_name   'chef-validator'
 validation_key           '/etc/chef-server/chef-validator.pem'
-chef_server_url          'http://$(hostname --fqdn):4000'
+chef_server_url          'https://$(hostname --fqdn)'
 syntax_check_cache_path  '$HOME/.chef/syntax_check_cache'
 EOF
 fi
@@ -160,7 +142,7 @@ node_name                'crowbar'
 client_key               '$KEYFILE'
 validation_client_name   'chef-validator'
 validation_key           '/etc/chef-server/chef-validator.pem'
-chef_server_url          'http://$(hostname --fqdn):4000'
+chef_server_url          'https://$(hostname --fqdn)'
 syntax_check_cache_path  '/home/crowbar/.chef/syntax_check_cache'
 EOF
     chown -R crowbar:crowbar /home/crowbar/.chef/
