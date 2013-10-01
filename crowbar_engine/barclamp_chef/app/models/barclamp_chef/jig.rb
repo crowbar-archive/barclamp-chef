@@ -140,6 +140,7 @@ class BarclampChef::Jig < Jig
   end
 
   def prep_chef_auth
+    reload if server.nil? || server.empty?
     Chef::Config[:client_key] = key
     Chef::Config[:chef_server_url] = server
     Chef::Config[:node_name] = client_name
