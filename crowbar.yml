@@ -37,6 +37,7 @@ roles:
     description: 'Provides a chef-server instance.'
     flags:
       - bootstrap
+      - server
   - name: chef-client
     jig: script
     description: 'Provides a chef client.'
