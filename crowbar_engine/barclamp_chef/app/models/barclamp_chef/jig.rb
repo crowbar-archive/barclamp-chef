@@ -76,12 +76,13 @@ class BarclampChef::Jig < Jig
     # For now, be bloody stupid.
     # We should really be much more clever about building
     # and maintaining the run list, but this will do to start off.
+    chef_node.attributes.normal = {}
+    chef_node.save
     chef_node.run_list(Chef::RunList.new(chef_noderole.to_s))
     chef_node.save
     # SSH into the node and kick chef-client.
     # If it passes, go to ACTIVE, otherwise ERROR.
     nr.runlog, ok = BarclampCrowbar::Jig.ssh("root@#{nr.node.name} chef-client")
-    nr.state = ok ? NodeRole::ACTIVE : NodeRole::ERROR
     # Reload the node, find any attrs on it that map to ones this
     # node role cares about, and write them to the wall.
     chef_node, chef_noderole = chef_node_and_role(nr.node)
@@ -97,9 +98,8 @@ class BarclampChef::Jig < Jig
     exclude_data.deep_merge!(nr.data)
     nr.wall = deep_diff(exclude_data,chef_node.attributes.normal)
     chef_noderole.default_attributes(nr.all_data)
-    chef_node.attributes.normal = {}
-    chef_node.save
     chef_noderole.save
+    nr.state = ok ? NodeRole::ACTIVE : NodeRole::ERROR
     nr.save!
     # Return ourselves
     return nr
