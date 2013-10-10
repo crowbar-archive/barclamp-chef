@@ -2,9 +2,13 @@
 
 if ! which chef-client; then
     if [[ -f /etc/redhat-release || -f /etc/centos-release ]]; then
+        yum -y makecache
         yum install -y chef
     elif [[ -d /etc/apt ]]; then
-        apt-get -y install chef
+        apt-get -y update
+        # Our chef package does not need ruby, but it does need the cstruct gem.
+        apt-get -y --force-yes install ruby1.9.1 ruby1.9.1-dev chef
+        gem install cstruct
         service chef-client stop
     elif [[ -f /etc/SuSE-release ]]; then
         OS=suse
