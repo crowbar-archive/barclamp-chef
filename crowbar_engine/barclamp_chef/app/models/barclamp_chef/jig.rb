@@ -34,8 +34,8 @@ class BarclampChef::Jig < Jig
     Chef::RunList.new(*runlist)
   end
 
-  def run(nr)
-    chef_node, chef_noderole = chef_node_and_role(nr.node)
+  def stage_run(nr)
+    prep_chef_auth
     unless (Chef::Role.load(nr.role.name) rescue nil)
       # If we did not find the role in question, then the chef
       # data from the barclamp has not been uploaded.
@@ -68,10 +68,18 @@ class BarclampChef::Jig < Jig
       else
         nr.role.jig_role(nr.role.name)
       end
-
     end
-    chef_noderole.default_attributes(nr.all_transition_data)
-    chef_noderole.run_list(make_run_list(nr))
+    return {
+      :runlist => make_run_list(nr),
+      :data => nr.all_transition_data
+    }
+  end
+  
+  def run(nr,data)
+    prep_chef_auth
+    chef_node, chef_noderole = chef_node_and_role(nr.node)
+    chef_noderole.default_attributes(data[:data])
+    chef_noderole.run_list(data[:runlist])
     chef_noderole.save
     # For now, be bloody stupid.
     # We should really be much more clever about building
@@ -92,12 +100,9 @@ class BarclampChef::Jig < Jig
       nr.node.discovery = node_disc
       nr.node.save!
     end
-    exclude_data = nr.all_deployment_data
-    exclude_data.deep_merge!(nr.node.all_active_data)
-    exclude_data.deep_merge!(nr.sysdata)
-    exclude_data.deep_merge!(nr.data)
-    nr.wall = deep_diff(exclude_data,chef_node.attributes.normal)
-    chef_noderole.default_attributes(nr.all_data)
+    new_attrs = chef_node.attributes.normal
+    nr.wall = deep_diff(data,new_attrs)
+    chef_noderole.default_attributes(data.deep_merge(new_attrs))
     chef_noderole.save
     nr.state = ok ? NodeRole::ACTIVE : NodeRole::ERROR
     nr.save!
