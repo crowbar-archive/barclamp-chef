@@ -1,0 +1,6 @@
+- tt = JSON.parse template 
+%dl
+  %dt= t ".deploy"
+  %dd= check_box_tag :data_deploy, 'true', tt["deploy"]
+= hidden_field_tag :dataprefix, "data_"
+
