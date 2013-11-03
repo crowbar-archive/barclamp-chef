@@ -27,9 +27,9 @@ class BarclampChef::Jig < Jig
     nr.node.active_node_roles.each do |n|
       next if (n.node.id != nr.node.id) || (n.jig.id != nr.jig.id)
       Rails.logger.info("Chefjig: Need to add #{n.role.name} to run list for #{nr.node.name}")
-      runlist << Chef::Role.load(n.role.name).to_s
+      runlist << "role[#{n.role.name}]"
     end
-    runlist << Chef::Role.load(nr.role.name).to_s
+    runlist << "role[#{nr.role.name}]"
     Rails.logger.info("Chefjig: discovered run list: #{runlist}")
     Chef::RunList.new(*runlist)
   end
@@ -74,7 +74,7 @@ class BarclampChef::Jig < Jig
       :data => nr.all_transition_data
     }
   end
-  
+
   def run(nr,data)
     prep_chef_auth
     chef_node, chef_noderole = chef_node_and_role(nr.node)
