@@ -52,7 +52,7 @@ class BarclampChef::Jig < Jig
           raise "Could not upload all Chef cookbook components from #{cookbook_path}"
         end
       end if File.directory?(cookbook_path)
-      Dir.glob(File.join(data_bag_path,"*")).each do |d|
+      Dir.glob(File.join(data_bag_path,"*.json")).each do |d|
         data_bag_name = d.split('/')[-1]
         next unless File.directory?(d)
         next if (data_bag_name == "..") || (data_bag_name == ".")
