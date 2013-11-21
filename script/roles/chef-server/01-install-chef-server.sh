@@ -22,12 +22,17 @@ elif [[ -d /etc/apt ]]; then
     OS=ubuntu
     apt-get -y install chef chef-server
 elif [[ -f /etc/SuSE-release ]]; then
-    OS=suse
+    if grep -q openSUSE /etc/SuSE-release; then
+        OS=opensuse
+        zypper install -y -l chef chef-server
+    else
+        OS=suse
+    fi
 else
     die "Staged on to unknown OS media!"
 fi
 
-if [[ $OS = ubuntu || $OS = redhat ]] && [[ ! -x /etc/init.d/chef-server ]]; then
+if [[ $OS = ubuntu || $OS = redhat || $OS = opensuse ]] && [[ ! -x /etc/init.d/chef-server ]]; then
     # Set up initial config
     chef-server-ctl reconfigure
     mkdir -p /etc/chef-server
