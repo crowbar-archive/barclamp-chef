@@ -36,7 +36,6 @@ roles:
     jig: script
     description: 'Provides a chef-server instance.'
     flags:
-      - bootstrap
       - server
   - name: chef-client
     jig: script
@@ -45,12 +44,21 @@ roles:
       - chef-server
     flags:
       - implicit
+  - name: chef-solo
+    jig: script
+    description: 'Configures chef-solo for a node.'
+    flags:
+      - implicit
 
 jigs:
   - name: chef
     class: 'BarclampChef::Jig'
     description: "Allow Crowbar to manage nodes using Chef"
     implementor: chef-client
+  - name: chef-solo
+    class: 'BarclampChef::SoloJig'
+    description: "Allow Crowbar to manage nodes using chef-solo"
+    implementor: chef-solo
 
 gems:
   pkgs:

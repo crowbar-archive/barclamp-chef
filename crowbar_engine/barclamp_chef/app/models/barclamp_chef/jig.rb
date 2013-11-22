@@ -60,13 +60,15 @@ class BarclampChef::Jig < Jig
           raise "Could not upload Chef data bags from #{data_bag_path}/#{data_bag_name}"
         end
       end if File.directory?(data_bag_path)
-      if File.exist?("#{role_path}/#{nr.role.name}.rb")
+      if nr.role.respond_to?(:jig_role)
+        Chef::Role.json_create(nr.role.jig_role(nr)).save
+      elsif File.exist?("#{role_path}/#{nr.role.name}.rb")
         @@load_role_mutex.synchronize do
           Chef::Config[:role_path] = role_path
           Chef::Role.from_disk(nr.role.name, "ruby").save
         end
       else
-        nr.role.jig_role(nr.role.name)
+        raise "Could not find or synthesize a Chef role for #{nr.name}"
       end
     end
     return {
@@ -149,29 +151,6 @@ class BarclampChef::Jig < Jig
     Chef::Config[:client_key] = key
     Chef::Config[:chef_server_url] = server
     Chef::Config[:node_name] = client_name
-  end
-
-  # Return all keys from hash A that do not exist in hash B, recursively
-  def deep_diff(a,b)
-    raise "Only pass hashes to deep_diff" unless a.kind_of?(Hash) && b.kind_of?(Hash)
-    # Base case, hashes are equal.
-    res = Hash[]
-    b.each do |k,v|
-      case
-        # Simple cases first:
-        # if a does not have a key named k, then b[k] is in the result set.
-      when !a.has_key?(k) then res[k] = v
-        # if a[k] == v, then k is not in the result set.
-      when a[k] == v then next
-        # a[k] != v, and both are Hashes.  res[k] is their deep_diff.
-      when a[k].kind_of?(Hash) && v.kind_of?(Hash)
-        maybe_res = deep_diff(a[k],v)
-        res[k] = maybe_res unless maybe_res.nil? || maybe_res.empty?
-        # v wins.
-      else res[k] = v
-      end
-    end
-    res
   end
 
 end # class
