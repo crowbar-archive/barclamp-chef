@@ -71,3 +71,9 @@ rpms:
     raw_pkgs:
       - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.8-1.el6.x86_64.rpm
       - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-11.6.0-1.el6.x86_64.rpm
+  opensuse-12.3:
+    raw_pkgs:
+      # Really, we should be using opensuse-specific packages here,
+      # but the omniinstalled ones are so easy to manage.
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-server-11.0.8-1.el6.x86_64.rpm
+      - https://opscode-omnibus-packages.s3.amazonaws.com/el/6/x86_64/chef-11.6.0-1.el6.x86_64.rpm

@@ -11,8 +11,7 @@ if ! which chef-client; then
         gem install cstruct
         service chef-client stop
     elif [[ -f /etc/SuSE-release ]]; then
-        OS=suse
-        exit 1
+        zypper install -y -l chef
     else
         die "Staged on to unknown OS media!"
     fi
