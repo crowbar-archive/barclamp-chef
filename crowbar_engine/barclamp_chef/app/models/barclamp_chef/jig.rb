@@ -107,9 +107,8 @@ class BarclampChef::Jig < Jig
     chef_noderole.default_attributes(data.deep_merge(new_attrs))
     chef_noderole.save
     nr.state = ok ? NodeRole::ACTIVE : NodeRole::ERROR
-    nr.save!
     # Return ourselves
-    return nr
+    finish_run(nr)
   end
 
   def create_node(node)

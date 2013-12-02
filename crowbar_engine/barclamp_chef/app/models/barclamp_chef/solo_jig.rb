@@ -64,27 +64,27 @@ class BarclampChef::SoloJig < Jig
       unless ok
       Rails.logger.error("Chef Solo jig: #{nr.name}: failed to copy dynamic role to target")
         nr.state = NodeRole::ERROR
-        return nr
+        return finish_run(nr)
       end
     end
     nr.runlog,ok = BarclampCrowbar::Jig.scp("#{node_json} root@#{nr.node.name}:/var/chef/node.json")
     unless ok
       Rails.logger.error("Chef Solo jig: #{nr.name}: failed to copy node attribs to target")
       nr.state = NodeRole::ERROR
-      return nr
+      return finish_run(nr)
     end
     nr.runlog,ok = BarclampCrowbar::Jig.ssh("root@#{nr.node.name} -- chef-solo -j /var/chef/node.json")
     unless ok
       Rails.logger.error("Chef Solo jig run for #{nr.name} failed")
       nr.state = NodeRole::ERROR
-      return nr
+      return finish_run(nr)
     end
     node_out_json = File.join(local_tmpdir, "node-out.json")
     res,ok = BarclampCrowbar::Jig.scp("root@#{nr.node.name}:/var/chef/node-out.json #{local_tmpdir}")
     unless ok
       Rails.logger.error("Chef Solo jig run for #{nr.name} did not copy attributes back #{res}")
       nr.state = NodeRole::ERROR
-      return nr
+      return finish_run(nr)
     end
     from_node = JSON.parse(IO.read(node_out_json))
     Node.transaction do
@@ -94,9 +94,8 @@ class BarclampChef::SoloJig < Jig
       nr.node.save!
     end
     nr.wall = deep_diff(data,from_node["normal"])
-    nr.save!
     nr.state = ok ? NodeRole::ACTIVE : NodeRole::ERROR
-    return nr
+    finish_run(nr)
   end
 end
     
