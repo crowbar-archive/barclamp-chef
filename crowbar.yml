@@ -62,7 +62,7 @@ jigs:
 
 gems:
   pkgs:
-    - 'chef-(~>11.6)'
+    - 'chef-(=11.6)'
 
 debs:
   ubuntu-12.04:
