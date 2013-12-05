@@ -37,6 +37,19 @@ roles:
     description: 'Provides a chef-server instance.'
     flags:
       - server
+    attribs:
+      - name: chef-server_deploy
+        description: 'Whether to deploy our own chef server or not.'
+        map: 'chefjig/server/deploy'
+      - name: chef-server_url
+        description: 'URL that clients should use to talk to the chef server'
+        map: 'chefjig/server/url'
+      - name: 'chef-server_admin_client_name'
+        description: 'The name of the client with admin privs that Crowbar should use'
+        map: 'chefjig/server/client-name'
+      - name: chef-server_admin_client_key
+        description: 'The private key for the admin client that Crowbar should use.'
+        map: 'chefjig/server/client-key'
   - name: chef-client
     jig: script
     description: 'Provides a chef client.'
@@ -44,11 +57,24 @@ roles:
       - chef-server
     flags:
       - implicit
+    attribs:
+      - name: chef-client_name
+        description: 'The name that this node should use for its chef client.'
+        map: 'chefjig/client/name'
+      - name: chef-client_key
+        description: 'The private key that this node should use to authenticate with the chef server'
+        map: 'chefjig/client/key'
+    wants-atribs:
+      - chef-server_url
   - name: chef-solo
     jig: script
     description: 'Configures chef-solo for a node.'
     flags:
       - implicit
+    attribs:
+      - name: chef-solo_client_name
+        description: 'The client name that chef-solo should use'
+        map: 'crowbar/chef-solo/name'
 
 jigs:
   - name: chef
