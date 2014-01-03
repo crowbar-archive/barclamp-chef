@@ -43,17 +43,27 @@ class BarclampChef::SoloJig < Jig
       nr.state = NodeRole::ERROR
       return nr
     end
-    res = nr.all_transition_data
-    res["run_list"] = make_run_list(nr)
-    return res
+    return {
+      "name" => "crowbar_baserole",
+      "default_attributes" => super(nr),
+      "override_attributes" => {},
+      "json_class" => "Chef::Role",
+      "description" => "Crowbar role to provide default attribs for this run",
+      "chef-type" => "role",
+      "run_list" => make_run_list(nr)
+    }
   end
 
-  def run (nr,data)
+  def run(nr,data)
     local_tmpdir = %x{mktemp -d /tmp/local-chefsolo-XXXXXX}.strip
     chef_path = "/opt/dell/barclamps/#{nr.role.barclamp.name}/chef-solo"
+    role_json = File.join(local_tmpdir,"crowbar_baserole.json")
     node_json = File.join(local_tmpdir,"node.json")
+    File.open(role_json,"w") do |f|
+      f.write(JSON.pretty_generate(data))
+    end
     File.open(node_json,"w") do |f|
-      JSON.dump(data,f)
+      JSON.dump({"run_list" => "role[crowbar_baserole]"},f)
     end
     if nr.role.respond_to?(:jig_role) && !File.exists?("#{chef_path}/roles/#{nr.role.name}.rb")
       # Create a JSON version of the role we will need so that chef solo can pick it up
@@ -67,9 +77,15 @@ class BarclampChef::SoloJig < Jig
         return finish_run(nr)
       end
     end
-    nr.runlog,ok = BarclampCrowbar::Jig.scp("#{node_json} root@#{nr.node.name}:/var/chef/node.json")
+    nr.runlog,ok = BarclampCrowbar::Jig.scp("#{role_json} root@#{nr.node.name}:/var/chef/roles/crowbar_baserole.json")
     unless ok
       Rails.logger.error("Chef Solo jig: #{nr.name}: failed to copy node attribs to target")
+      nr.state = NodeRole::ERROR
+      return finish_run(nr)
+    end
+    nr.runlog,ok = BarclampCrowbar::Jig.scp("#{node_json} root@#{nr.node.name}:/var/chef/node.json")
+    unless ok
+      Rails.logger.error("Chef Solo jig: #{nr.name}: failed to copy node to target")
       nr.state = NodeRole::ERROR
       return finish_run(nr)
     end
@@ -93,7 +109,7 @@ class BarclampChef::SoloJig < Jig
       nr.node.discovery = discovery
       nr.node.save!
     end
-    nr.wall = deep_diff(data,from_node["normal"])
+    nr.wall = from_node["normal"]
     nr.state = ok ? NodeRole::ACTIVE : NodeRole::ERROR
     finish_run(nr)
   end

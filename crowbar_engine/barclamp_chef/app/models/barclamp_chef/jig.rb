@@ -24,14 +24,13 @@ class BarclampChef::Jig < Jig
 
   def make_run_list(nr)
     runlist = Array.new
-    nr.node.active_node_roles.each do |n|
-      next if (n.node.id != nr.node.id) || (n.jig.id != nr.jig.id)
-      Rails.logger.info("Chefjig: Need to add #{n.role.name} to run list for #{nr.node.name}")
-      runlist << "role[#{n.role.name}]"
-    end
+    runlist << "recipe[barclamp]"
+    runlist << "recipe[ohai]"
+    runlist << "recipe[utils]"
     runlist << "role[#{nr.role.name}]"
+    runlist << "recipe[crowbar-hacks::solo-saver]"
     Rails.logger.info("Chefjig: discovered run list: #{runlist}")
-    Chef::RunList.new(*runlist)
+    return runlist
   end
 
   def stage_run(nr)
@@ -73,7 +72,7 @@ class BarclampChef::Jig < Jig
     end
     return {
       :runlist => make_run_list(nr),
-      :data => nr.all_transition_data
+      :data => super(nr)
     }
   end
 
@@ -87,7 +86,6 @@ class BarclampChef::Jig < Jig
     # We should really be much more clever about building
     # and maintaining the run list, but this will do to start off.
     chef_node.attributes.normal = {}
-    chef_node.save
     chef_node.run_list(Chef::RunList.new(chef_noderole.to_s))
     chef_node.save
     # SSH into the node and kick chef-client.
@@ -103,7 +101,7 @@ class BarclampChef::Jig < Jig
       nr.node.save!
     end
     new_attrs = chef_node.attributes.normal
-    nr.wall = deep_diff(data,new_attrs)
+    nr.wall = new_attrs
     chef_noderole.default_attributes(data.deep_merge(new_attrs))
     chef_noderole.save
     nr.state = ok ? NodeRole::ACTIVE : NodeRole::ERROR
