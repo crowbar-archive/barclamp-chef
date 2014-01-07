@@ -35,8 +35,6 @@ roles:
   - name: chef-server
     jig: script
     description: 'Provides a chef-server instance.'
-    flags:
-      - server
     attribs:
       - name: chef-server_deploy
         description: 'Whether to deploy our own chef server or not.'
