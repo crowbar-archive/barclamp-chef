@@ -32,10 +32,11 @@ class BarclampChef::SoloJig < Jig
 
   def stage_run(nr)
     chef_path = "/opt/dell/barclamps/#{nr.role.barclamp.name}/chef-solo"
+    chef_data_bag_path = "/var/tmp/barclamps/#{nr.role.barclamp.name}/chef-solo/"
     unless File.directory?(chef_path)
       raise("No Chef data at #{chef_path}")
     end
-    paths = ["#{chef_path}/roles", "#{chef_path}/data_bags", "#{chef_path}/cookbooks"].select{|d|File.directory?(d)}.join(' ')
+    paths = ["#{chef_path}/roles", "#{chef_data_bag_path}/data_bags", "#{chef_path}/cookbooks"].select{|d|File.directory?(d)}.join(' ')
     # This needs to be replaced by rsync.
     nr.runlog,ok = BarclampCrowbar::Jig.scp("-r #{paths} root@#{nr.node.name}:/var/chef")
     unless ok
