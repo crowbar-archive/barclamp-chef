@@ -1,4 +1,4 @@
-# Copyright 2013, Dell
+# Copyright 2014, Dell
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ require 'json'
 require 'fileutils'
 
 class BarclampChef::SoloJig < Jig
+  BERKSHELF_PACKAGE = "package.tar.gz"
 
   def make_run_list(nr)
     runlist = Array.new
@@ -44,6 +45,17 @@ class BarclampChef::SoloJig < Jig
       nr.state = NodeRole::ERROR
       return nr
     end
+
+    # If a berkshelf package was copied across, then extract it on the target
+    if File.exists?("#{chef_path}/cookbooks/#{BERKSHELF_PACKAGE}")
+      nr.runlog,ok = BarclampCrowbar::Jig.ssh("root@#{nr.node.name} -- \"cd /var/chef/cookbooks; tar xf #{BERKSHELF_PACKAGE}\"")
+      unless ok
+        Rails.logger.error("Chef Solo jig run for #{nr.name} failed to extract Berkshelf package: #{nr.runlog}")
+        nr.state = NodeRole::ERROR
+        return nr
+      end
+    end
+
     return {
       "name" => "crowbar_baserole",
       "default_attributes" => super(nr),
