@@ -19,10 +19,9 @@ class BarclampChef::Role < Role
   def on_proposed(nr)
     chef_path = "/opt/dell/barclamps/#{nr.role.barclamp.name}/chef-solo"
     berksfile = "#{chef_path}/Berksfile"
-    use_central_berksfile = "#{chef_path}/Berksfile.central"
     dest_package = "#{chef_path}/cookbooks/#{BarclampChef::SoloJig::BERKSHELF_PACKAGE}"
 
-    if File.exists?(use_central_berksfile) && File.exists?(berksfile) && !File.exists?(dest_package)
+    if File.exists?(berksfile) && !File.exists?(dest_package)
       result = %x(cd #{chef_path}; BERKSHELF_PATH=#{BERKSHELF_PATH} berks package 2>&1)
       unless $?.exitstatus == 0
         raise "Unable to berks package #{chef_path}: #{result}"
